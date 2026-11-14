@@ -42,7 +42,7 @@ footer{color:#6a7c87;font-size:.8rem;text-align:center;padding:12px}
 <main>
 <header>
   <h1>מכתיב דוחות אולטרסאונד</h1>
-  <p>הכתבה בעברית עם מונחים רפואיים באנגלית · עריכה, העתקה ושיתוף</p>
+  <p>הכתבה בעברית · עיצוב קולי, מונחים רפואיים בעברית, עריכה ושיתוף</p>
 </header>
 
 <section class="panel">
@@ -58,7 +58,7 @@ footer{color:#6a7c87;font-size:.8rem;text-align:center;padding:12px}
     </label>
   </div>
   <div id="status"><span class="dot"></span> מוכן להכתבה. מומלץ לדבר במשפטים קצרים וברורים.</div>
-  <p class="small">ההכתבה מתווספת לטקסט שמתחת. אפשר לעצור, לתקן ידנית ולהמשיך להכתיב. בדפדפנים מסוימים נדרש חיבור לאינטרנט.</p>
+  <p class="small">ההטקסט מתעצב אוטומטית: אפשר לומר “שורה חדשה”, “נקודתיים” או “פסיק”. מספרים ומידות יומרו לספרות ולקיצורים, ומונחים רפואיים מוכרים ייכתבו בעברית. אפשר תמיד לתקן ידנית.</p>
 </section>
 
 <section class="panel">
@@ -76,22 +76,23 @@ footer{color:#6a7c87;font-size:.8rem;text-align:center;padding:12px}
   <h2>מונחים וקיצורים להוספה מהירה</h2>
   <p class="small">לחיצה על מונח מוסיפה אותו במקום הסמן בטקסט.</p>
   <div class="chips" id="terms">
-    <button class="chip" data-term="Liver">Liver</button>
-    <button class="chip" data-term="Gallbladder">Gallbladder</button>
+    <button class="chip" data-term="כבד">כבד</button>
+    <button class="chip" data-term="כיס מרה">כיס מרה</button>
     <button class="chip" data-term="CBD">CBD</button>
-    <button class="chip" data-term="Pancreas">Pancreas</button>
-    <button class="chip" data-term="Spleen">Spleen</button>
-    <button class="chip" data-term="Kidneys">Kidneys</button>
-    <button class="chip" data-term="Urinary bladder">Urinary bladder</button>
-    <button class="chip" data-term="Prostate">Prostate</button>
-    <button class="chip" data-term="Uterus">Uterus</button>
-    <button class="chip" data-term="Ovaries">Ovaries</button>
-    <button class="chip" data-term="No free fluid">No free fluid</button>
-    <button class="chip" data-term="No hydronephrosis">No hydronephrosis</button>
-    <button class="chip" data-term="Simple cyst">Simple cyst</button>
-    <button class="chip" data-term="Solid lesion">Solid lesion</button>
-    <button class="chip" data-term="Doppler">Doppler</button>
-    <button class="chip" data-term="Impression:">Impression:</button>
+    <button class="chip" data-term="לבלב">לבלב</button>
+    <button class="chip" data-term="טחול">טחול</button>
+    <button class="chip" data-term="כליות">כליות</button>
+    <button class="chip" data-term="שלפוחית השתן">שלפוחית השתן</button>
+    <button class="chip" data-term="ערמונית">ערמונית</button>
+    <button class="chip" data-term="רחם">רחם</button>
+    <button class="chip" data-term="שחלות">שחלות</button>
+    <button class="chip" data-term="אין נוזל חופשי">אין נוזל חופשי</button>
+    <button class="chip" data-term="אין הידרונפרוזיס">אין הידרונפרוזיס</button>
+    <button class="chip" data-term="ציסטה פשוטה">ציסטה פשוטה</button>
+    <button class="chip" data-term="נגע סולידי">נגע סולידי</button>
+    <button class="chip" data-term="דופלר">דופלר</button>
+    <button class="chip" data-term="סיכום:">סיכום:</button>
+    <button class="chip" data-term="המטומה">המטומה</button>
   </div>
 </section>
 
@@ -127,6 +128,63 @@ footer{color:#6a7c87;font-size:.8rem;text-align:center;padding:12px}
    const d = document.createElement('span'); d.className = 'dot' + (live ? ' live' : '');
    status.append(d, document.createTextNode(' ' + message));
  }
+ function normalizeDictation(input) {
+   let text = input;
+   const commands = [
+     [/\bnew line\b/gi, '\n'], [/\bnext line\b/gi, '\n'],
+     [/\bnew paragraph\b/gi, '\n\n'], [/\bparagraph\b/gi, '\n\n'],
+     [/\bcolon\b/gi, ':'], [/\bcomma\b/gi, ','],
+     [/\bfull stop\b/gi, '.'], [/\bperiod\b/gi, '.'],
+     [/שורה חדשה/g, '\n'], [/פסקה חדשה/g, '\n\n'],
+     [/נקודתיים/g, ':'], [/פסיק/g, ','], [/נקודה/g, '.']
+   ];
+   for (const [pattern, replacement] of commands) text = text.replace(pattern, replacement);
+
+   const numbers = {
+     'אחת עשרה':'11','אחד עשר':'11','שתים עשרה':'12','שתיים עשרה':'12','שנים עשר':'12',
+     'שלוש עשרה':'13','ארבע עשרה':'14','חמש עשרה':'15','שש עשרה':'16','שבע עשרה':'17',
+     'שמונה עשרה':'18','תשע עשרה':'19','עשרים':'20','שלושים':'30','ארבעים':'40',
+     'חמישים':'50','שישים':'60','שבעים':'70','שמונים':'80','תשעים':'90','מאה':'100',
+     'אפס':'0','אחד':'1','אחת':'1','שתיים':'2','שתים':'2','שניים':'2','שנים':'2',
+     'שלוש':'3','שלושה':'3','ארבע':'4','ארבעה':'4','חמש':'5','חמישה':'5',
+     'שש':'6','שישה':'6','שבע':'7','שבעה':'7','שמונה':'8','תשע':'9','תשעה':'9',
+     'עשר':'10','עשרה':'10',
+     'zero':'0','one':'1','two':'2','three':'3','four':'4','five':'5','six':'6',
+     'seven':'7','eight':'8','nine':'9','ten':'10','eleven':'11','twelve':'12',
+     'thirteen':'13','fourteen':'14','fifteen':'15','sixteen':'16','seventeen':'17',
+     'eighteen':'18','nineteen':'19','twenty':'20'
+   };
+   for (const key of Object.keys(numbers).sort((a,b)=>b.length-a.length)) {
+     const escaped = key.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+     const re = new RegExp('(^|[\\s,;:])' + escaped + '(?=$|[\\s,;:.])', 'gi');
+     text = text.replace(re, (match, prefix) => prefix + numbers[key]);
+   }
+
+   const units = [
+     [/centimeters?|centimetres?/gi, 'ס״מ'], [/millimeters?|millimetres?/gi, 'מ״מ'],
+     [/kilometers?|kilometres?/gi, 'ק״מ'], [/meters?/gi, 'מ׳'],
+     [/milliliters?|millilitres?/gi, 'מ״ל'], [/liters?|litres?/gi, 'ל׳'],
+     [/סנטימטרים|סנטימטר/g, 'ס״מ'], [/מילימטרים|מילימטר/g, 'מ״מ'],
+     [/קילומטרים|קילומטר/g, 'ק״מ'], [/מטרים|מטר/g, 'מ׳'],
+     [/מיליליטרים|מיליליטר/g, 'מ״ל'], [/ליטרים|ליטר/g, 'ל׳']
+   ];
+   for (const [pattern, replacement] of units) text = text.replace(pattern, replacement);
+
+   const medical = [
+     [/fatty liver/gi, 'כבד שומני'], [/gallbladder/gi, 'כיס מרה'],
+     [/urinary bladder/gi, 'שלפוחית השתן'], [/common bile duct/gi, 'צינור המרה המשותף'],
+     [/no free fluid/gi, 'אין נוזל חופשי'], [/no hydronephrosis/gi, 'אין הידרונפרוזיס'],
+     [/simple cyst/gi, 'ציסטה פשוטה'], [/solid lesion/gi, 'נגע סולידי'],
+     [/hematoma/gi, 'המטומה'], [/haematoma/gi, 'המטומה'], [/cyst/gi, 'ציסטה'],
+     [/lesion/gi, 'נגע'], [/spleen/gi, 'טחול'], [/pancreas/gi, 'לבלב'],
+     [/kidneys?/gi, 'כליות'], [/liver/gi, 'כבד'], [/prostate/gi, 'ערמונית'],
+     [/uterus/gi, 'רחם'], [/ovaries/gi, 'שחלות'], [/doppler/gi, 'דופלר'],
+     [/impression/gi, 'סיכום'], [/findings/gi, 'ממצאים']
+   ];
+   for (const [pattern, replacement] of medical) text = text.replace(pattern, replacement);
+   return text.replace(/[ \t]+\n/g, '\n').replace(/\s+([,:.])/g, '$1').replace(/ {2,}/g, ' ').trim();
+ }
+
  function start() {
    if (!SpeechRecognition) {
      setStatus('זיהוי דיבור אינו נתמך בדפדפן זה. נסה Chrome מעודכן או הקלד את הדוח ידנית.');
@@ -146,8 +204,8 @@ footer{color:#6a7c87;font-size:.8rem;text-align:center;padding:12px}
        else interim += piece;
      }
      if (freshFinal) {
-       const sep = report.value && !/\s$/.test(report.value) ? ' ' : '';
-       report.value += sep + freshFinal;
+       const sep = report.value && !/[\s\n]$/.test(report.value) ? ' ' : '';
+       report.value += sep + normalizeDictation(freshFinal);
        report.dispatchEvent(new Event('input'));
      }
      if (interim) setStatus('מזהה: ' + interim, true);
