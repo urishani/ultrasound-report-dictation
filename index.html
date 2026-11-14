@@ -1,0 +1,205 @@
+<!doctype html>
+<html lang="he" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#123b55">
+<title>מכתיב דוחות אולטרסאונד</title>
+<style>
+:root{font-family:Arial,"Noto Sans Hebrew",sans-serif;color:#183042;background:#f3f7fa}
+*{box-sizing:border-box}
+body{margin:0;padding:18px 12px 36px}
+main{max-width:850px;margin:auto}
+header{background:#123b55;color:#fff;border-radius:18px;padding:22px 20px;margin-bottom:16px}
+h1{font-size:1.55rem;margin:0 0 7px}
+header p{margin:0;color:#dceaf1;line-height:1.5}
+.panel{background:#fff;border:1px solid #dbe5eb;border-radius:16px;padding:17px;margin:13px 0;box-shadow:0 3px 12px #163b5510}
+.row{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+button,select{font:inherit}
+button{border:0;border-radius:11px;padding:12px 16px;font-weight:700;cursor:pointer}
+button:disabled{opacity:.45;cursor:not-allowed}
+.primary{background:#126b91;color:white}
+.record{background:#b42336;color:white;min-width:160px}
+.record.active{background:#7d1422}
+.secondary{background:#e8f0f4;color:#183042}
+.share{background:#e8f5ed;color:#155b35}
+h2{font-size:1.1rem;margin:0 0 12px}
+#status{font-size:.95rem;color:#526878;margin-top:10px;min-height:1.4em}
+.dot{display:inline-block;width:9px;height:9px;border-radius:50%;background:#91a5b2;margin-left:7px}
+.dot.live{background:#d92d20;box-shadow:0 0 0 4px #d92d2020}
+textarea{width:100%;min-height:245px;border:1px solid #cbd8df;border-radius:12px;padding:14px;font:1.05rem/1.75 Arial,sans-serif;resize:vertical;direction:rtl}
+.small{font-size:.88rem;color:#607482;line-height:1.55}
+.chips{display:flex;flex-wrap:wrap;gap:7px}
+.chip{background:#edf3f7;color:#25485c;padding:9px 11px;border-radius:999px;font-size:.9rem}
+.actions{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px}
+select{padding:10px;border:1px solid #cbd8df;border-radius:10px;background:white}
+.notice{border-right:4px solid #d49b27;background:#fff8e8;padding:12px 14px;border-radius:9px;color:#654b18;line-height:1.55;font-size:.9rem}
+footer{color:#6a7c87;font-size:.8rem;text-align:center;padding:12px}
+@media(max-width:520px){body{padding:10px 9px 25px}header{padding:18px 16px}button{flex:1}.record{min-width:100%}.actions button{min-width:42%}}
+</style>
+</head>
+<body>
+<main>
+<header>
+  <h1>מכתיב דוחות אולטרסאונד</h1>
+  <p>הכתבה בעברית עם מונחים רפואיים באנגלית · עריכה, העתקה ושיתוף</p>
+</header>
+
+<section class="panel">
+  <h2>1. הכתבת חוות הדעת</h2>
+  <div class="row">
+    <button id="recordBtn" class="record">● התחל הקלטה</button>
+    <button id="stopBtn" class="secondary" disabled>עצור</button>
+    <label class="small">שפת זיהוי:
+      <select id="speechLang">
+        <option value="he-IL">עברית</option>
+        <option value="en-US">אנגלית</option>
+      </select>
+    </label>
+  </div>
+  <div id="status"><span class="dot"></span> מוכן להכתבה. מומלץ לדבר במשפטים קצרים וברורים.</div>
+  <p class="small">ההכתבה מתווספת לטקסט שמתחת. אפשר לעצור, לתקן ידנית ולהמשיך להכתיב. בדפדפנים מסוימים נדרש חיבור לאינטרנט.</p>
+</section>
+
+<section class="panel">
+  <h2>2. טקסט הדוח – ניתן לעריכה</h2>
+  <textarea id="report" placeholder="הכתיבו כאן את ממצאי בדיקת האולטרסאונד…
+
+לדוגמה: הכבד בגודל תקין, מרקמו אחיד. אין עדות להרחבת דרכי המרה."></textarea>
+  <div class="actions">
+    <button class="secondary" id="templateBtn">הוסף מבנה דוח</button>
+    <button class="secondary" id="clearBtn">נקה טקסט</button>
+  </div>
+</section>
+
+<section class="panel">
+  <h2>מונחים וקיצורים להוספה מהירה</h2>
+  <p class="small">לחיצה על מונח מוסיפה אותו במקום הסמן בטקסט.</p>
+  <div class="chips" id="terms">
+    <button class="chip" data-term="Liver">Liver</button>
+    <button class="chip" data-term="Gallbladder">Gallbladder</button>
+    <button class="chip" data-term="CBD">CBD</button>
+    <button class="chip" data-term="Pancreas">Pancreas</button>
+    <button class="chip" data-term="Spleen">Spleen</button>
+    <button class="chip" data-term="Kidneys">Kidneys</button>
+    <button class="chip" data-term="Urinary bladder">Urinary bladder</button>
+    <button class="chip" data-term="Prostate">Prostate</button>
+    <button class="chip" data-term="Uterus">Uterus</button>
+    <button class="chip" data-term="Ovaries">Ovaries</button>
+    <button class="chip" data-term="No free fluid">No free fluid</button>
+    <button class="chip" data-term="No hydronephrosis">No hydronephrosis</button>
+    <button class="chip" data-term="Simple cyst">Simple cyst</button>
+    <button class="chip" data-term="Solid lesion">Solid lesion</button>
+    <button class="chip" data-term="Doppler">Doppler</button>
+    <button class="chip" data-term="Impression:">Impression:</button>
+  </div>
+</section>
+
+<section class="panel">
+  <h2>3. העתקה ושיתוף</h2>
+  <div class="actions">
+    <button class="primary" id="copyBtn">העתק טקסט</button>
+    <button class="share" id="shareBtn">שתף…</button>
+    <button class="secondary" id="waBtn">WhatsApp</button>
+    <button class="secondary" id="mailBtn">אימייל</button>
+  </div>
+  <p class="small" id="copyStatus" aria-live="polite"></p>
+</section>
+
+<div class="notice">
+  <strong>פרטיות ובטיחות:</strong> אין להזין שם, מספר זהות או כל פרט מזהה של מטופל. זיהוי הדיבור נעשה באמצעות שירות הדפדפן, ועשוי להעביר את האודיו לעיבוד חיצוני בהתאם להגדרות ולמדיניות הדפדפן. אין לשמור או להעביר דוח לפני בדיקה ותיקון של כל הממצאים. האפליקציה אינה מאמתת אבחנות ואינה מחליפה פענוח מקצועי.
+</div>
+<footer>האפליקציה פועלת בדפדפן. מומלץ להשתמש ב‑Chrome מעודכן ולאפשר גישה למיקרופון.</footer>
+</main>
+<script>
+(() => {
+ const report = document.getElementById('report');
+ const recordBtn = document.getElementById('recordBtn');
+ const stopBtn = document.getElementById('stopBtn');
+ const status = document.getElementById('status');
+ const dot = status.querySelector('.dot');
+ const copyStatus = document.getElementById('copyStatus');
+ const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+ let recognition = null, recording = false, finalText = '', restart = false;
+
+ function setStatus(message, live=false) {
+   status.innerHTML = '';
+   const d = document.createElement('span'); d.className = 'dot' + (live ? ' live' : '');
+   status.append(d, document.createTextNode(' ' + message));
+ }
+ function start() {
+   if (!SpeechRecognition) {
+     setStatus('זיהוי דיבור אינו נתמך בדפדפן זה. נסה Chrome מעודכן או הקלד את הדוח ידנית.');
+     return;
+   }
+   if (recording) return;
+   recognition = new SpeechRecognition();
+   recognition.lang = document.getElementById('speechLang').value;
+   recognition.continuous = true;
+   recognition.interimResults = true;
+   recognition.onstart = () => { recording = true; recordBtn.classList.add('active'); recordBtn.textContent='● מקליט…'; stopBtn.disabled=false; setStatus('ההכתבה פעילה. דבר כעת.', true); };
+   recognition.onresult = (event) => {
+     let interim = '', freshFinal = '';
+     for (let i=event.resultIndex; i<event.results.length; i++) {
+       const piece = event.results[i][0].transcript;
+       if (event.results[i].isFinal) freshFinal += piece + ' ';
+       else interim += piece;
+     }
+     if (freshFinal) {
+       const sep = report.value && !/\s$/.test(report.value) ? ' ' : '';
+       report.value += sep + freshFinal;
+       report.dispatchEvent(new Event('input'));
+     }
+     if (interim) setStatus('מזהה: ' + interim, true);
+   };
+   recognition.onerror = (event) => {
+     if (event.error === 'not-allowed' || event.error === 'service-not-allowed') setStatus('אין הרשאה למיקרופון. יש לאפשר גישה בהגדרות הדפדפן.');
+     else if (event.error !== 'no-speech') setStatus('שגיאת זיהוי: ' + event.error + '. אפשר לנסות שוב.');
+   };
+   recognition.onend = () => {
+     if (recording && restart) { try { recognition.start(); } catch(e) {} }
+     else if (!recording) resetButtons();
+   };
+   try { recognition.start(); } catch(e) { setStatus('לא ניתן להתחיל הקלטה. נסה שוב.'); }
+ }
+ function resetButtons() { recording=false; restart=false; recordBtn.classList.remove('active'); recordBtn.textContent='● התחל הקלטה'; stopBtn.disabled=true; }
+ function stop() { recording=false; restart=false; if (recognition) { try { recognition.stop(); } catch(e) {} } resetButtons(); setStatus('ההכתבה נעצרה. אפשר לערוך את הטקסט או להמשיך בהכתבה חדשה.'); }
+ recordBtn.addEventListener('click', start);
+ stopBtn.addEventListener('click', stop);
+
+ document.getElementById('templateBtn').addEventListener('click', () => {
+   const template = 'בדיקת אולטרסאונד\n\nממצאים (Findings):\n\n\nסיכום (Impression):\n';
+   const prefix = report.value && !report.value.endsWith('\n') ? '\n\n' : '';
+   report.value += prefix + template; report.focus();
+ });
+ document.getElementById('clearBtn').addEventListener('click', () => {
+   if (report.value && confirm('למחוק את כל הטקסט?')) { report.value=''; copyStatus.textContent=''; }
+ });
+ document.querySelectorAll('[data-term]').forEach(btn => btn.addEventListener('click', () => {
+   const term = btn.dataset.term, startPos=report.selectionStart, endPos=report.selectionEnd;
+   report.setRangeText(term, startPos, endPos, 'end'); report.focus();
+ }));
+ document.getElementById('copyBtn').addEventListener('click', async () => {
+   if (!report.value.trim()) { copyStatus.textContent='אין טקסט להעתקה.'; return; }
+   try { await navigator.clipboard.writeText(report.value); copyStatus.textContent='הטקסט הועתק. אפשר להדביק אותו בכל אפליקציה.'; }
+   catch(e) { report.focus(); report.select(); copyStatus.textContent='סמן את הטקסט והעתק באמצעות לחיצה ארוכה או Ctrl+C.'; }
+ });
+ document.getElementById('shareBtn').addEventListener('click', async () => {
+   if (!report.value.trim()) { copyStatus.textContent='אין טקסט לשיתוף.'; return; }
+   if (navigator.share) {
+     try { await navigator.share({title:'דוח אולטרסאונד', text:report.value}); } catch(e) {}
+   } else { copyStatus.textContent='שיתוף ישיר אינו נתמך כאן. השתמש בכפתור העתק טקסט.'; }
+ });
+ document.getElementById('waBtn').addEventListener('click', () => {
+   if (!report.value.trim()) { copyStatus.textContent='אין טקסט לשליחה.'; return; }
+   window.open('https://wa.me/?text=' + encodeURIComponent(report.value), '_blank');
+ });
+ document.getElementById('mailBtn').addEventListener('click', () => {
+   if (!report.value.trim()) { copyStatus.textContent='אין טקסט לשליחה.'; return; }
+   window.location.href='mailto:?subject=' + encodeURIComponent('דוח אולטרסאונד') + '&body=' + encodeURIComponent(report.value);
+ });
+ window.addEventListener('beforeunload', e => { if (report.value.trim()) { e.preventDefault(); e.returnValue=''; } });
+})();
+</script>
+</body>
+</html>
