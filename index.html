@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="theme-color" content="#123b55">
-<title>מכתיב דוחות אולטרסאונד · v1.4</title>
+<title>מכתיב דוחות אולטרסאונד · v1.5</title>
 <style>
 :root{font-family:Arial,"Noto Sans Hebrew",sans-serif;color:#183042;background:#f3f7fa}
 *{box-sizing:border-box}
@@ -55,7 +55,7 @@ footer{color:#6a7c87;font-size:.8rem;text-align:center;padding:12px}
 <main>
 <header>
   <div class="header-text">
-    <h1>מכתיב דוחות אולטרסאונד <span class="version" id="appVersion">v1.4</span></h1>
+    <h1>מכתיב דוחות אולטרסאונד <span class="version" id="appVersion">v1.5</span></h1>
     <p>הכתבה בעברית · עיצוב קולי, מונחים רפואיים בעברית, עריכה ושיתוף</p>
   </div>
   <button type="button" class="help-btn" id="helpBtn" aria-label="עזרה" title="עזרה">?</button>
@@ -187,8 +187,8 @@ footer{color:#6a7c87;font-size:.8rem;text-align:center;padding:12px}
      [/שורה הבאה/g, '\n'], [/לשורה חדשה/g, '\n'], [/ירידת שורה/g, '\n'],
      [/פסקה חדשה/g, '\n\n'], [/פסקהחדשה/g, '\n\n'], [/פסקאות חדשות/g, '\n\n'],
      [/פסקה הבאה/g, '\n\n'], [/לפסקה חדשה/g, '\n\n'],
-     // Colon command is "נקודתיים" only — do NOT map "נקודותיים" (medical term) to ":".
-     [/נקודתיים/g, ':'], [/נקודתים/g, ':'],
+     // Colon command: "נקודתיים" and ASR variant "נקודותיים" (extra vav) both become ":".
+     [/נקודותיים/g, ':'], [/נקודתיים/g, ':'], [/נקודתים/g, ':'],
      [/פסיק/g, ','], [/פסיקים/g, ','],
      [/סימן נקודה/g, '.'], [/נקודה/g, '.']
    ];
