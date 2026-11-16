@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="theme-color" content="#123b55">
-<title>מכתיב דוחות אולטרסאונד · v1.5</title>
+<title>מכתיב דוחות אולטרסאונד · v1.6</title>
 <style>
 :root{font-family:Arial,"Noto Sans Hebrew",sans-serif;color:#183042;background:#f3f7fa}
 *{box-sizing:border-box}
@@ -55,7 +55,7 @@ footer{color:#6a7c87;font-size:.8rem;text-align:center;padding:12px}
 <main>
 <header>
   <div class="header-text">
-    <h1>מכתיב דוחות אולטרסאונד <span class="version" id="appVersion">v1.5</span></h1>
+    <h1>מכתיב דוחות אולטרסאונד <span class="version" id="appVersion">v1.6</span></h1>
     <p>הכתבה בעברית · עיצוב קולי, מונחים רפואיים בעברית, עריכה ושיתוף</p>
   </div>
   <button type="button" class="help-btn" id="helpBtn" aria-label="עזרה" title="עזרה">?</button>
@@ -236,7 +236,12 @@ footer{color:#6a7c87;font-size:.8rem;text-align:center;padding:12px}
      [/impression/gi, 'סיכום'], [/findings/gi, 'ממצאים']
    ];
    for (const [pattern, replacement] of medical) text = text.replace(pattern, replacement);
-   return text.replace(/[ \t]+\n/g, '\n').replace(/\s+([,:.])/g, '$1').replace(/ {2,}/g, ' ').trim();
+   // Trim spaces/tabs only — never strip \n from "שורה חדשה" / paragraph commands.
+   return text
+     .replace(/[ \t]+\n/g, '\n')
+     .replace(/[ \t]+([,:.])/g, '$1')
+     .replace(/ {2,}/g, ' ')
+     .replace(/^[ \t]+|[ \t]+$/g, '');
  }
 
  function moveCaretToPosition(focus = false) {
