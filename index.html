@@ -10,10 +10,14 @@
 *{box-sizing:border-box}
 body{margin:0;padding:18px 12px 36px}
 main{max-width:850px;margin:auto}
-header{background:#123b55;color:#fff;border-radius:18px;padding:22px 20px;margin-bottom:16px}
+header{background:#123b55;color:#fff;border-radius:18px;padding:22px 20px;margin-bottom:12px;display:flex;align-items:flex-start;justify-content:space-between;gap:12px}
+.header-text{flex:1;min-width:0}
 h1{font-size:1.55rem;margin:0 0 7px}
 header p{margin:0;color:#dceaf1;line-height:1.5}
+.help-btn{flex-shrink:0;width:40px;height:40px;border-radius:50%;border:2px solid #9ec3d6;background:transparent;color:#fff;font-size:1.25rem;font-weight:700;line-height:1;padding:0;display:inline-flex;align-items:center;justify-content:center;cursor:pointer}
+.help-btn:hover,.help-btn:focus-visible{background:#1a5270;outline:none}
 .panel{background:#fff;border:1px solid #dbe5eb;border-radius:16px;padding:17px;margin:13px 0;box-shadow:0 3px 12px #163b5510}
+.panel.work{margin-top:10px}
 .row{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
 button,select{font:inherit}
 button{border:0;border-radius:11px;padding:12px 16px;font-weight:700;cursor:pointer}
@@ -24,7 +28,7 @@ button:disabled{opacity:.45;cursor:not-allowed}
 .secondary{background:#e8f0f4;color:#183042}
 .share{background:#e8f5ed;color:#155b35}
 h2{font-size:1.1rem;margin:0 0 12px}
-#status{font-size:.95rem;color:#526878;margin-top:10px;min-height:1.4em}
+#status{font-size:.95rem;color:#526878;margin:8px 0 10px;min-height:1.4em}
 .dot{display:inline-block;width:9px;height:9px;border-radius:50%;background:#91a5b2;margin-left:7px}
 .dot.live{background:#d92d20;box-shadow:0 0 0 4px #d92d2020}
 textarea{width:100%;min-height:245px;border:1px solid #cbd8df;border-radius:12px;padding:14px;font:1.05rem/1.75 Arial,sans-serif;resize:vertical;direction:rtl}
@@ -32,21 +36,32 @@ textarea{width:100%;min-height:245px;border:1px solid #cbd8df;border-radius:12px
 .chips{display:flex;flex-wrap:wrap;gap:7px}
 .chip{background:#edf3f7;color:#25485c;padding:9px 11px;border-radius:999px;font-size:.9rem}
 .actions{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px}
+.actions.below-report{margin-top:10px}
 select{padding:10px;border:1px solid #cbd8df;border-radius:10px;background:white}
 .notice{border-right:4px solid #d49b27;background:#fff8e8;padding:12px 14px;border-radius:9px;color:#654b18;line-height:1.55;font-size:.9rem}
 footer{color:#6a7c87;font-size:.8rem;text-align:center;padding:12px}
-@media(max-width:520px){body{padding:10px 9px 25px}header{padding:18px 16px}button{flex:1}.record{min-width:100%}.actions button{min-width:42%}}
+.modal{position:fixed;inset:0;z-index:1000;display:none;align-items:center;justify-content:center;padding:16px}
+.modal.open{display:flex}
+.modal-backdrop{position:absolute;inset:0;background:#12243380}
+.modal-dialog{position:relative;background:#fff;border-radius:16px;padding:20px 18px 16px;max-width:520px;width:100%;max-height:min(80vh,640px);overflow:auto;box-shadow:0 12px 40px #12243340}
+.modal-dialog h2{margin:0 0 12px;padding-left:36px}
+.modal-dialog p{margin:0 0 12px;color:#3d5564;line-height:1.6;font-size:.95rem}
+.modal-close{position:absolute;top:12px;left:12px;width:36px;height:36px;border-radius:50%;background:#e8f0f4;color:#183042;padding:0;font-size:1.2rem;line-height:1}
+@media(max-width:520px){body{padding:10px 9px 25px}header{padding:18px 16px}button{flex:1}.record{min-width:100%}.actions button{min-width:42%}.help-btn{flex:0 0 40px}}
 </style>
 </head>
 <body>
 <main>
 <header>
-  <h1>מכתיב דוחות אולטרסאונד</h1>
-  <p>הכתבה בעברית · עיצוב קולי, מונחים רפואיים בעברית, עריכה ושיתוף</p>
+  <div class="header-text">
+    <h1>מכתיב דוחות אולטרסאונד</h1>
+    <p>הכתבה בעברית · עיצוב קולי, מונחים רפואיים בעברית, עריכה ושיתוף</p>
+  </div>
+  <button type="button" class="help-btn" id="helpBtn" aria-label="עזרה" title="עזרה">?</button>
 </header>
 
-<section class="panel">
-  <h2>1. הכתבת חוות הדעת</h2>
+<section class="panel work">
+  <h2>הכתבה וטקסט הדוח</h2>
   <div class="row">
     <button id="recordBtn" class="record">● התחל הקלטה</button>
     <label class="small">שפת זיהוי:
@@ -57,19 +72,14 @@ footer{color:#6a7c87;font-size:.8rem;text-align:center;padding:12px}
     </label>
   </div>
   <div id="status"><span class="dot"></span> מוכן להכתבה. מומלץ לדבר במשפטים קצרים וברורים.</div>
-  <p class="small">לחצו על „התחל הקלטה” ודברו. הכפתור יהפוך ל„עצור”. ההכתבה מוכנסת במקום שבו נמצא הסמן. לאחר העצירה תוכלו להקליד סימני פיסוק, מונחים או תיקונים. לחיצה נוספת תמשיך להכתיב מהמיקום הנוכחי של הסמן, במצב הוספה (Insert), בלי לדרוס טקסט קיים. אפשר גם להוסיף מונחים מהכפתורים שבהמשך.</p>
-  <p class="small">הטקסט מתעצב אוטומטית: אפשר לומר “שורה חדשה”, “נקודתיים” או “פסיק”. מספרים ומידות יומרו לספרות ולקיצורים, ומונחים רפואיים מוכרים ייכתבו בעברית.</p>
-</section>
-
-<section class="panel">
-  <h2>2. טקסט הדוח – ניתן לעריכה</h2>
   <textarea id="report" placeholder="הכתיבו כאן את ממצאי בדיקת האולטרסאונד…
 
 לדוגמה: הכבד בגודל תקין, מרקמו אחיד. אין עדות להרחבת דרכי המרה."></textarea>
-  <div class="actions">
-    <button class="secondary" id="templateBtn">הוסף מבנה דוח</button>
+  <div class="actions below-report">
+    <button class="primary" id="copyBtn">העתק טקסט</button>
     <button class="secondary" id="clearBtn">נקה טקסט</button>
   </div>
+  <p class="small" id="copyStatus" aria-live="polite"></p>
 </section>
 
 <section class="panel">
@@ -97,14 +107,12 @@ footer{color:#6a7c87;font-size:.8rem;text-align:center;padding:12px}
 </section>
 
 <section class="panel">
-  <h2>3. העתקה ושיתוף</h2>
+  <h2>שיתוף</h2>
   <div class="actions">
-    <button class="primary" id="copyBtn">העתק טקסט</button>
     <button class="share" id="shareBtn">שתף…</button>
     <button class="secondary" id="waBtn">WhatsApp</button>
     <button class="secondary" id="mailBtn">אימייל</button>
   </div>
-  <p class="small" id="copyStatus" aria-live="polite"></p>
 </section>
 
 <div class="notice">
@@ -112,15 +120,49 @@ footer{color:#6a7c87;font-size:.8rem;text-align:center;padding:12px}
 </div>
 <footer>האפליקציה פועלת בדפדפן. מומלץ להשתמש ב‑Chrome מעודכן ולאפשר גישה למיקרופון.</footer>
 </main>
+
+<div class="modal" id="helpModal" role="dialog" aria-modal="true" aria-labelledby="helpTitle" hidden>
+  <div class="modal-backdrop" data-close-help></div>
+  <div class="modal-dialog">
+    <button type="button" class="modal-close" id="helpClose" aria-label="סגור">×</button>
+    <h2 id="helpTitle">איך להשתמש</h2>
+    <p>לחצו על „התחל הקלטה” ודברו. הכפתור יהפוך ל„עצור”. ההכתבה מוכנסת במקום שבו נמצא הסמן. לאחר העצירה תוכלו להקליד סימני פיסוק, מונחים או תיקונים. לחיצה נוספת תמשיך להכתיב מהמיקום הנוכחי של הסמן, במצב הוספה (Insert), בלי לדרוס טקסט קיים. אפשר גם להוסיף מונחים מהכפתורים שבהמשך.</p>
+    <p>הטקסט מתעצב אוטומטית: אפשר לומר “שורה חדשה”, “נקודתיים” או “פסיק”. מספרים ומידות יומרו לספרות ולקיצורים, ומונחים רפואיים מוכרים ייכתבו בעברית.</p>
+  </div>
+</div>
+
 <script>
 (() => {
  const report = document.getElementById('report');
  const recordBtn = document.getElementById('recordBtn');
  const status = document.getElementById('status');
- const dot = status.querySelector('.dot');
  const copyStatus = document.getElementById('copyStatus');
+ const helpBtn = document.getElementById('helpBtn');
+ const helpModal = document.getElementById('helpModal');
+ const helpClose = document.getElementById('helpClose');
  const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+ const SILENCE_PAUSE_MS = 5000;
  let recognition = null, recording = false, dictationPosition = 0;
+ let silenceTimer = null, wantRecording = false, pauseNewlinePending = false;
+
+ function openHelp() {
+   helpModal.hidden = false;
+   helpModal.classList.add('open');
+   helpClose.focus();
+ }
+ function closeHelp() {
+   helpModal.classList.remove('open');
+   helpModal.hidden = true;
+   helpBtn.focus();
+ }
+ helpBtn.addEventListener('click', openHelp);
+ helpClose.addEventListener('click', closeHelp);
+ helpModal.addEventListener('click', (e) => {
+   if (e.target.matches('[data-close-help]')) closeHelp();
+ });
+ document.addEventListener('keydown', (e) => {
+   if (e.key === 'Escape' && helpModal.classList.contains('open')) closeHelp();
+ });
 
  function setStatus(message, live=false) {
    status.innerHTML = '';
@@ -130,12 +172,22 @@ footer{color:#6a7c87;font-size:.8rem;text-align:center;padding:12px}
  function normalizeDictation(input) {
    let text = input;
    const commands = [
-     [/\bnew line\b/gi, '\n'], [/\bnext line\b/gi, '\n'],
-     [/\bnew paragraph\b/gi, '\n\n'], [/\bparagraph\b/gi, '\n\n'],
-     [/\bcolon\b/gi, ':'], [/\bcomma\b/gi, ','],
-     [/\bfull stop\b/gi, '.'], [/\bperiod\b/gi, '.'],
-     [/שורה חדשה/g, '\n'], [/פסקה חדשה/g, '\n\n'],
-     [/נקודתיים/g, ':'], [/פסיק/g, ','], [/נקודה/g, '.']
+     // English punctuation / line-break commands and common ASR variants
+     [/\bnew[\s-]?lines?\b/gi, '\n'], [/\bnext[\s-]?lines?\b/gi, '\n'],
+     [/\bnewline\b/gi, '\n'], [/\bline break\b/gi, '\n'], [/\blinebreak\b/gi, '\n'],
+     [/\bnew[\s-]?paragraphs?\b/gi, '\n\n'], [/\bnext[\s-]?paragraphs?\b/gi, '\n\n'],
+     [/\bparagraph break\b/gi, '\n\n'],
+     [/\bcolons?\b/gi, ':'],
+     [/\bcommas?\b/gi, ','],
+     [/\bfull[\s-]?stops?\b/gi, '.'], [/\bperiods?\b/gi, '.'],
+     // Hebrew punctuation / line-break commands and common ASR mishearings
+     [/שורה חדשה/g, '\n'], [/שורהחדשה/g, '\n'], [/שורות חדשות/g, '\n'],
+     [/שורה הבאה/g, '\n'], [/לשורה חדשה/g, '\n'], [/ירידת שורה/g, '\n'],
+     [/פסקה חדשה/g, '\n\n'], [/פסקהחדשה/g, '\n\n'], [/פסקאות חדשות/g, '\n\n'],
+     [/פסקה הבאה/g, '\n\n'], [/לפסקה חדשה/g, '\n\n'],
+     [/נקודותיים/g, ':'], [/נקודתיים/g, ':'], [/נקודתים/g, ':'], [/נקודהיים/g, ':'],
+     [/פסיק/g, ','], [/פסיקים/g, ','],
+     [/סימן נקודה/g, '.'], [/נקודה/g, '.']
    ];
    for (const [pattern, replacement] of commands) text = text.replace(pattern, replacement);
 
@@ -189,6 +241,32 @@ footer{color:#6a7c87;font-size:.8rem;text-align:center;padding:12px}
    if (focus) report.focus();
    report.setSelectionRange(position, position);
  }
+ function clearSilenceTimer() {
+   if (silenceTimer) { clearTimeout(silenceTimer); silenceTimer = null; }
+ }
+ function commitPauseNewline() {
+   if (!wantRecording) return;
+   const pos = Math.max(0, Math.min(dictationPosition, report.value.length));
+   const before = report.value.slice(0, pos);
+   if (before && !before.endsWith('\n')) {
+     report.setRangeText('\n', pos, pos, 'preserve');
+     dictationPosition = pos + 1;
+     report.setSelectionRange(dictationPosition, dictationPosition);
+     report.dispatchEvent(new Event('input', {bubbles:true}));
+   }
+   pauseNewlinePending = true;
+   moveCaretToPosition(true);
+   setStatus('הפסקה זוהתה — שורה חדשה. אפשר להקליד או להמשיך לדבר.', true);
+   armSilenceTimer();
+ }
+ function armSilenceTimer() {
+   clearSilenceTimer();
+   if (!wantRecording) return;
+   silenceTimer = setTimeout(() => {
+     silenceTimer = null;
+     commitPauseNewline();
+   }, SILENCE_PAUSE_MS);
+ }
  function insertDictation(text) {
    if (!text) return;
    // Insert at the cursor position captured when this recording session began.
@@ -196,41 +274,30 @@ footer{color:#6a7c87;font-size:.8rem;text-align:center;padding:12px}
    const pos = Math.max(0, Math.min(dictationPosition, report.value.length));
    let addition = text;
    const before = report.value.slice(0, pos);
-   const after = report.value.slice(pos);
    if (before && !/[\s\n]$/.test(before) && !/^[\s\n,.;:!?]/.test(addition)) addition = ' ' + addition;
    report.setRangeText(addition, pos, pos, 'preserve');
    dictationPosition = pos + addition.length;
    report.setSelectionRange(dictationPosition, dictationPosition);
    report.dispatchEvent(new Event('input', {bubbles:true}));
+   pauseNewlinePending = false;
  }
  function resetButton() {
    recording = false;
    recordBtn.classList.remove('active');
    recordBtn.textContent = '● המשך הקלטה';
  }
- function start() {
-   if (!SpeechRecognition) {
-     setStatus('זיהוי דיבור אינו נתמך בדפדפן זה. נסה Chrome מעודכן או הקלד את הדוח ידנית.');
-     return;
-   }
-   if (recording) return;
-   // Resume from the user's current cursor/selection. If text is selected, new
-   // dictation replaces only that selection; otherwise it is inserted there.
-   dictationPosition = report.selectionStart ?? report.value.length;
-   // If a range is selected, collapse to its beginning: dictation is always
-   // insert-mode and must not replace or delete the selected/existing text.
-   report.focus();
-   recognition = new SpeechRecognition();
-   recognition.lang = document.getElementById('speechLang').value;
-   recognition.continuous = true;
-   recognition.interimResults = true;
-   recognition.onstart = () => {
+ function bindRecognitionHandlers(rec) {
+   rec.onstart = () => {
      recording = true;
      recordBtn.classList.add('active');
      recordBtn.textContent = '■ עצור';
-     setStatus('ההכתבה פעילה. דבר כעת.', true);
+     setStatus(pauseNewlinePending
+       ? 'ממשיכים בשורה חדשה. דבר או הקלד.'
+       : 'ההכתבה פעילה. דבר כעת.', true);
    };
-   recognition.onresult = (event) => {
+   rec.onresult = (event) => {
+     // Any speech activity resets the 5s silence window for a new-line commit.
+     armSilenceTimer();
      let interim = '', freshFinal = '';
      for (let i=event.resultIndex; i<event.results.length; i++) {
        const piece = event.results[i][0].transcript;
@@ -243,37 +310,84 @@ footer{color:#6a7c87;font-size:.8rem;text-align:center;padding:12px}
      }
      if (interim) setStatus('מזהה: ' + interim, true);
    };
-   recognition.onerror = (event) => {
+   rec.onerror = (event) => {
      if (event.error === 'not-allowed' || event.error === 'service-not-allowed') {
+       wantRecording = false;
+       clearSilenceTimer();
        setStatus('אין הרשאה למיקרופון. יש לאפשר גישה בהגדרות הדפדפן.');
        resetButton();
-     } else if (event.error !== 'no-speech') {
+     } else if (event.error === 'no-speech') {
+       // Silence; the 5s pause timer decides when to commit a newline.
+     } else if (event.error !== 'aborted') {
        setStatus('שגיאת זיהוי: ' + event.error + '. אפשר לנסות שוב.');
      }
    };
-   recognition.onend = () => {
-     resetButton();
-     moveCaretToPosition(true);
-     setStatus('ההכתבה נעצרה. הסמן נשאר במקום שבו הסתיימה ההכתבה. אפשר לערוך ולהמשיך מאותו מקום.');
+   rec.onend = () => {
+     recording = false;
+     if (!wantRecording) {
+       clearSilenceTimer();
+       resetButton();
+       moveCaretToPosition(true);
+       setStatus('ההכתבה נעצרה. הסמן נשאר במקום שבו הסתיימה ההכתבה. אפשר לערוך ולהמשיך מאותו מקום.');
+       return;
+     }
+     // Browser engines often stop after short silence; keep listening without
+     // resetting the 5s pause timer so a true pause still commits a newline.
+     try {
+       recognition = new SpeechRecognition();
+       recognition.lang = document.getElementById('speechLang').value;
+       recognition.continuous = true;
+       recognition.interimResults = true;
+       bindRecognitionHandlers(recognition);
+       recognition.start();
+     } catch (e) {
+       wantRecording = false;
+       clearSilenceTimer();
+       resetButton();
+       setStatus('ההכתבה נעצרה. אפשר להמשיך מהמקלדת או ללחוץ להקלטה מחדש.');
+     }
    };
-   try { recognition.start(); }
-   catch(e) { resetButton(); setStatus('לא ניתן להתחיל הקלטה. נסה שוב.'); }
+ }
+ function start() {
+   if (!SpeechRecognition) {
+     setStatus('זיהוי דיבור אינו נתמך בדפדפן זה. נסה Chrome מעודכן או הקלד את הדוח ידנית.');
+     return;
+   }
+   if (wantRecording || recording) return;
+   // Resume from the user's current cursor/selection. If text is selected, new
+   // dictation replaces only that selection; otherwise it is inserted there.
+   dictationPosition = report.selectionStart ?? report.value.length;
+   // If a range is selected, collapse to its beginning: dictation is always
+   // insert-mode and must not replace or delete the selected/existing text.
+   pauseNewlinePending = false;
+   wantRecording = true;
+   report.focus();
+   recognition = new SpeechRecognition();
+   recognition.lang = document.getElementById('speechLang').value;
+   recognition.continuous = true;
+   recognition.interimResults = true;
+   bindRecognitionHandlers(recognition);
+   try {
+     recognition.start();
+     armSilenceTimer();
+   } catch(e) {
+     wantRecording = false;
+     clearSilenceTimer();
+     resetButton();
+     setStatus('לא ניתן להתחיל הקלטה. נסה שוב.');
+   }
  }
  function stop() {
-   if (!recording) return;
-   recording = false;
+   if (!wantRecording && !recording) return;
+   wantRecording = false;
+   clearSilenceTimer();
    if (recognition) { try { recognition.stop(); } catch(e) {} }
    resetButton();
    moveCaretToPosition(true);
    setStatus('ההכתבה נעצרה. הסמן נשאר במקום שבו הסתיימה ההכתבה. אפשר לערוך ולהמשיך מאותו מקום.');
  }
- recordBtn.addEventListener('click', () => recording ? stop() : start());
+ recordBtn.addEventListener('click', () => (wantRecording || recording) ? stop() : start());
 
- document.getElementById('templateBtn').addEventListener('click', () => {
-   const template = 'בדיקת אולטרסאונד\n\nממצאים (Findings):\n\n\nסיכום (Impression):\n';
-   const prefix = report.value && !report.value.endsWith('\n') ? '\n\n' : '';
-   report.value += prefix + template; report.focus();
- });
  document.getElementById('clearBtn').addEventListener('click', () => {
    if (report.value && confirm('למחוק את כל הטקסט?')) { report.value=''; copyStatus.textContent=''; }
  });
