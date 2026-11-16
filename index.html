@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="theme-color" content="#123b55">
-<title>מכתיב דוחות אולטרסאונד</title>
+<title>מכתיב דוחות אולטרסאונד · v1.3</title>
 <style>
 :root{font-family:Arial,"Noto Sans Hebrew",sans-serif;color:#183042;background:#f3f7fa}
 *{box-sizing:border-box}
@@ -12,7 +12,8 @@ body{margin:0;padding:18px 12px 36px}
 main{max-width:850px;margin:auto}
 header{background:#123b55;color:#fff;border-radius:18px;padding:22px 20px;margin-bottom:12px;display:flex;align-items:flex-start;justify-content:space-between;gap:12px}
 .header-text{flex:1;min-width:0}
-h1{font-size:1.55rem;margin:0 0 7px}
+h1{font-size:1.55rem;margin:0 0 7px;display:flex;flex-wrap:wrap;align-items:baseline;gap:10px}
+.version{display:inline-block;font-size:.78rem;font-weight:700;letter-spacing:.04em;color:#123b55;background:#dceaf1;border-radius:999px;padding:4px 10px;vertical-align:middle}
 header p{margin:0;color:#dceaf1;line-height:1.5}
 .help-btn{flex-shrink:0;width:40px;height:40px;border-radius:50%;border:2px solid #9ec3d6;background:transparent;color:#fff;font-size:1.25rem;font-weight:700;line-height:1;padding:0;display:inline-flex;align-items:center;justify-content:center;cursor:pointer}
 .help-btn:hover,.help-btn:focus-visible{background:#1a5270;outline:none}
@@ -54,7 +55,7 @@ footer{color:#6a7c87;font-size:.8rem;text-align:center;padding:12px}
 <main>
 <header>
   <div class="header-text">
-    <h1>מכתיב דוחות אולטרסאונד</h1>
+    <h1>מכתיב דוחות אולטרסאונד <span class="version" id="appVersion">v1.3</span></h1>
     <p>הכתבה בעברית · עיצוב קולי, מונחים רפואיים בעברית, עריכה ושיתוף</p>
   </div>
   <button type="button" class="help-btn" id="helpBtn" aria-label="עזרה" title="עזרה">?</button>
@@ -141,9 +142,10 @@ footer{color:#6a7c87;font-size:.8rem;text-align:center;padding:12px}
  const helpModal = document.getElementById('helpModal');
  const helpClose = document.getElementById('helpClose');
  const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
- const SILENCE_PAUSE_MS = 5000;
  let recognition = null, recording = false, dictationPosition = 0;
- let silenceTimer = null, wantRecording = false, pauseNewlinePending = false;
+ let wantRecording = false, pauseNewlinePending = false;
+ let hadSpeechInSession = false, pendingInterim = '';
+ let lastRecognitionError = null, liveInterimStart = null, restartPending = false;
 
  function openHelp() {
    helpModal.hidden = false;
@@ -241,11 +243,78 @@ footer{color:#6a7c87;font-size:.8rem;text-align:center;padding:12px}
    if (focus) report.focus();
    report.setSelectionRange(position, position);
  }
- function clearSilenceTimer() {
-   if (silenceTimer) { clearTimeout(silenceTimer); silenceTimer = null; }
+ function beginRecognitionSession() {
+   recognition = new SpeechRecognition();
+   recognition.lang = document.getElementById('speechLang').value || 'he-IL';
+   recognition.continuous = true;
+   recognition.interimResults = true;
+   recognition.maxAlternatives = 1;
+   hadSpeechInSession = false;
+   pendingInterim = '';
+   liveInterimStart = null;
+   lastRecognitionError = null;
+   restartPending = false;
+   bindRecognitionHandlers(recognition);
+   recognition.start();
  }
- function commitPauseNewline() {
-   if (!wantRecording) return;
+ function scheduleEmptySessionRestart() {
+   // Chrome cannot start() synchronously inside onend; a short defer is required.
+   // Only used after empty no-speech ends — not a silence/recording timeout.
+   if (restartPending || !wantRecording) return;
+   restartPending = true;
+   setTimeout(() => {
+     restartPending = false;
+     if (!wantRecording) return;
+     try {
+       beginRecognitionSession();
+       recordBtn.classList.add('active');
+       recordBtn.textContent = '■ עצור';
+       setStatus('ההכתבה פעילה. דבר כעת.', true);
+     } catch (e) {
+       wantRecording = false;
+       resetButton();
+       setStatus('לא ניתן להמשיך האזנה. לחץ להקלטה מחדש.');
+     }
+   }, 150);
+ }
+ function writeLiveInterim(text) {
+   if (!text) return;
+   if (liveInterimStart === null) {
+     liveInterimStart = Math.max(0, Math.min(dictationPosition, report.value.length));
+     let addition = text;
+     const before = report.value.slice(0, liveInterimStart);
+     if (before && !/[\s\n]$/.test(before) && !/^[\s\n,.;:!?]/.test(addition)) addition = ' ' + addition;
+     report.setRangeText(addition, liveInterimStart, liveInterimStart, 'end');
+     dictationPosition = report.selectionEnd;
+   } else {
+     const from = Math.max(0, Math.min(liveInterimStart, report.value.length));
+     const to = Math.max(0, Math.min(dictationPosition, report.value.length));
+     report.setRangeText(text, from, to, 'end');
+     dictationPosition = report.selectionEnd;
+   }
+   report.dispatchEvent(new Event('input', {bubbles:true}));
+ }
+ function commitLiveFinal(text) {
+   const addition = normalizeDictation(text);
+   if (liveInterimStart !== null) {
+     const from = Math.max(0, Math.min(liveInterimStart, report.value.length));
+     const to = Math.max(0, Math.min(dictationPosition, report.value.length));
+     const before = report.value.slice(0, from);
+     let finalText = addition || '';
+     if (finalText && before && !/[\s\n]$/.test(before) && !/^[\s\n,.;:!?]/.test(finalText)) {
+       finalText = ' ' + finalText;
+     }
+     report.setRangeText(finalText, from, to, 'end');
+     dictationPosition = report.selectionEnd;
+     report.dispatchEvent(new Event('input', {bubbles:true}));
+     liveInterimStart = null;
+     pauseNewlinePending = false;
+     return;
+   }
+   if (addition) insertDictation(addition);
+ }
+ function commitSilenceNewline() {
+   // One notice per pause: only after real speech in this recognition session.
    const pos = Math.max(0, Math.min(dictationPosition, report.value.length));
    const before = report.value.slice(0, pos);
    if (before && !before.endsWith('\n')) {
@@ -254,18 +323,17 @@ footer{color:#6a7c87;font-size:.8rem;text-align:center;padding:12px}
      report.setSelectionRange(dictationPosition, dictationPosition);
      report.dispatchEvent(new Event('input', {bubbles:true}));
    }
-   pauseNewlinePending = true;
+   pauseNewlinePending = false;
    moveCaretToPosition(true);
    setStatus('הפסקה זוהתה — שורה חדשה. אפשר להקליד או להמשיך לדבר.', true);
-   armSilenceTimer();
  }
- function armSilenceTimer() {
-   clearSilenceTimer();
-   if (!wantRecording) return;
-   silenceTimer = setTimeout(() => {
-     silenceTimer = null;
-     commitPauseNewline();
-   }, SILENCE_PAUSE_MS);
+ function finalizeSessionUtterance() {
+   if (pendingInterim) {
+     commitLiveFinal(pendingInterim);
+     pendingInterim = '';
+   } else {
+     liveInterimStart = null;
+   }
  }
  function insertDictation(text) {
    if (!text) return;
@@ -289,63 +357,92 @@ footer{color:#6a7c87;font-size:.8rem;text-align:center;padding:12px}
  function bindRecognitionHandlers(rec) {
    rec.onstart = () => {
      recording = true;
+     lastRecognitionError = null;
      recordBtn.classList.add('active');
      recordBtn.textContent = '■ עצור';
-     setStatus(pauseNewlinePending
-       ? 'ממשיכים בשורה חדשה. דבר או הקלד.'
-       : 'ההכתבה פעילה. דבר כעת.', true);
+     setStatus('ההכתבה פעילה. דבר כעת.', true);
    };
    rec.onresult = (event) => {
-     // Any speech activity resets the 5s silence window for a new-line commit.
-     armSilenceTimer();
+     // Silence is detected via onend, not a timer.
+     hadSpeechInSession = true;
+     lastRecognitionError = null;
      let interim = '', freshFinal = '';
      for (let i=event.resultIndex; i<event.results.length; i++) {
        const piece = event.results[i][0].transcript;
        if (event.results[i].isFinal) freshFinal += piece + ' ';
        else interim += piece;
      }
+     pendingInterim = interim;
      if (freshFinal) {
-       const addition = normalizeDictation(freshFinal);
-       insertDictation(addition);
+       pendingInterim = '';
+       commitLiveFinal(freshFinal);
+       setStatus('התקבל טקסט. אפשר להמשיך לדבר.', true);
+     } else if (interim) {
+       // Show partial speech in the report immediately (not only in the status line).
+       writeLiveInterim(interim);
+       setStatus('מזהה: ' + interim, true);
      }
-     if (interim) setStatus('מזהה: ' + interim, true);
    };
    rec.onerror = (event) => {
+     lastRecognitionError = event.error;
      if (event.error === 'not-allowed' || event.error === 'service-not-allowed') {
        wantRecording = false;
-       clearSilenceTimer();
+       pendingInterim = '';
+       hadSpeechInSession = false;
+       liveInterimStart = null;
        setStatus('אין הרשאה למיקרופון. יש לאפשר גישה בהגדרות הדפדפן.');
        resetButton();
+     } else if (event.error === 'network') {
+       // Web Speech needs the browser cloud speech service; restarting hides this error.
+       wantRecording = false;
+       pendingInterim = '';
+       hadSpeechInSession = false;
+       liveInterimStart = null;
+       setStatus('שגיאת רשת בזיהוי דיבור (network). פתח את האפליקציה ב־Chrome רגיל עם אינטרנט פעיל, ואשר גישה למיקרופון.');
+       resetButton();
      } else if (event.error === 'no-speech') {
-       // Silence; the 5s pause timer decides when to commit a newline.
-     } else if (event.error !== 'aborted') {
+       // Engine silence signal; onend performs the new-line commit if speech occurred.
+     } else if (event.error === 'aborted') {
+       // Common during intentional stop or session replace; keep quiet unless still wanting record.
+       if (wantRecording) setStatus('מחדש האזנה…', true);
+     } else {
        setStatus('שגיאת זיהוי: ' + event.error + '. אפשר לנסות שוב.');
      }
    };
    rec.onend = () => {
      recording = false;
      if (!wantRecording) {
-       clearSilenceTimer();
+       pendingInterim = '';
+       hadSpeechInSession = false;
+       liveInterimStart = null;
        resetButton();
        moveCaretToPosition(true);
        setStatus('ההכתבה נעצרה. הסמן נשאר במקום שבו הסתיימה ההכתבה. אפשר לערוך ולהמשיך מאותו מקום.');
        return;
      }
-     // Browser engines often stop after short silence; keep listening without
-     // resetting the 5s pause timer so a true pause still commits a newline.
-     try {
-       recognition = new SpeechRecognition();
-       recognition.lang = document.getElementById('speechLang').value;
-       recognition.continuous = true;
-       recognition.interimResults = true;
-       bindRecognitionHandlers(recognition);
-       recognition.start();
-     } catch (e) {
-       wantRecording = false;
-       clearSilenceTimer();
-       resetButton();
-       setStatus('ההכתבה נעצרה. אפשר להמשיך מהמקלדת או ללחוץ להקלטה מחדש.');
+     // Fatal recognition errors already cleared wantRecording in onerror.
+     if (lastRecognitionError === 'network' || lastRecognitionError === 'not-allowed' || lastRecognitionError === 'service-not-allowed') {
+       pendingInterim = '';
+       hadSpeechInSession = false;
+       liveInterimStart = null;
+       return;
      }
+     // Recognition lifecycle silence: engine ended after a pause / no-speech.
+     const spoke = hadSpeechInSession;
+     finalizeSessionUtterance();
+     if (spoke) commitSilenceNewline();
+     hadSpeechInSession = false;
+     pendingInterim = '';
+     liveInterimStart = null;
+     if (!spoke) {
+       // Empty no-speech end: keep listening (deferred — sync start-in-onend breaks Chrome).
+       scheduleEmptySessionRestart();
+       return;
+     }
+     // After real speech + silence new-line: stop for manual continue.
+     wantRecording = false;
+     resetButton();
+     moveCaretToPosition(true);
    };
  }
  function start() {
@@ -360,19 +457,16 @@ footer{color:#6a7c87;font-size:.8rem;text-align:center;padding:12px}
    // If a range is selected, collapse to its beginning: dictation is always
    // insert-mode and must not replace or delete the selected/existing text.
    pauseNewlinePending = false;
+   hadSpeechInSession = false;
+   pendingInterim = '';
+   liveInterimStart = null;
+   lastRecognitionError = null;
    wantRecording = true;
    report.focus();
-   recognition = new SpeechRecognition();
-   recognition.lang = document.getElementById('speechLang').value;
-   recognition.continuous = true;
-   recognition.interimResults = true;
-   bindRecognitionHandlers(recognition);
    try {
-     recognition.start();
-     armSilenceTimer();
+     beginRecognitionSession();
    } catch(e) {
      wantRecording = false;
-     clearSilenceTimer();
      resetButton();
      setStatus('לא ניתן להתחיל הקלטה. נסה שוב.');
    }
@@ -380,7 +474,10 @@ footer{color:#6a7c87;font-size:.8rem;text-align:center;padding:12px}
  function stop() {
    if (!wantRecording && !recording) return;
    wantRecording = false;
-   clearSilenceTimer();
+   pendingInterim = '';
+   hadSpeechInSession = false;
+   liveInterimStart = null;
+   restartPending = false;
    if (recognition) { try { recognition.stop(); } catch(e) {} }
    resetButton();
    moveCaretToPosition(true);
