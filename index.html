@@ -4,7 +4,8 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="theme-color" content="#123b55">
-<title>מכתיב דוחות אולטרסאונד · v1.11</title>
+<title>מכתיב דוחות אולטרסאונד · v1.12</title>
+<link rel="manifest" href="manifest.webmanifest">
 <style>
 :root{font-family:Arial,"Noto Sans Hebrew",sans-serif;color:#183042;background:#f3f7fa}
 *{box-sizing:border-box}
@@ -82,7 +83,7 @@ footer{color:#6a7c87;font-size:.8rem;text-align:center;padding:12px}
 <main>
 <header>
   <div class="header-text">
-    <h1>מכתיב דוחות אולטרסאונד <span class="version" id="appVersion">v1.11</span></h1>
+    <h1>מכתיב דוחות אולטרסאונד <span class="version" id="appVersion">v1.12</span></h1>
     <p>הכתבה בעברית · עיצוב קולי, מונחים רפואיים בעברית, עריכה ושיתוף</p>
   </div>
   <button type="button" class="help-btn" id="helpBtn" aria-label="עזרה" title="עזרה">?</button>
@@ -167,10 +168,10 @@ footer{color:#6a7c87;font-size:.8rem;text-align:center;padding:12px}
   <div class="modal-dialog">
     <button type="button" class="modal-close" id="helpClose" aria-label="סגור">×</button>
     <h2 id="helpTitle">איך להשתמש</h2>
-    <p>לחצו על „התחל הקלטה” ודברו. הכפתור יהפוך ל„עצור”. ההכתבה מוכנסת במקום שבו נמצא הסמן, במצב הוספה (Insert), בלי לדרוס טקסט קיים. לאחר הפסקה תוכלו לערוך: לחיצה בטקסט ממקמת את הסמן, ולחיצה כפולה בוחרת מילה. ייפתח חלון בחירה — מקלדת או מילים מיוחדות.</p>
-    <p>במילים מיוחדות: ⌫ מוחק את המילה שנבחרה (או תו אחורה), ולחיצה על מונח מחליפה את הבחירה או מוסיפה במקום הסמן. „סגור” סוגר את החלון ומעביר את הסמן לסוף הטקסט — מוכן להמשך הכתבה.</p>
-    <p>הטקסט מתעצב אוטומטית: אפשר לומר “שורה חדשה”, “נקודתיים” או “פסיק”. מספרים ומידות יומרו לספרות ולקיצורים, ומונחים רפואיים מוכרים ייכתבו בעברית.</p>
-    <p>סמנו „הקטן אחרי העתקה” כדי שאחרי „העתק טקסט” הדפדפן יוקטן/ייסוג לאחור — ואפשר להדביק במערכת הדיווח. לחצו „חזרה להכתבה” כשתרצו להמשיך לתיק הבא.</p>
+    <p>לחצו על „התחל הקלטה” ודברו. ההכתבה מוכנסת במקום הסמן במצב הוספה. לחיצה בתוך מילה בוחרת את כל המילה; לחיצה על רווח ממקמת את הסמן בין רווחים. במחשב נפתחות מיד מילים מיוחדות (כולל ⌫). בטלפון מוצגת גם בחירת מקלדת.</p>
+    <p>מילה מיוחדת מוחלפת או מוכנסת עם רווח לפני ואחרי לפי הצורך. „סגור” מעביר את הסמן לסוף הטקסט להמשך הכתבה.</p>
+    <p>הטקסט מתעצב אוטומטית: “שורה חדשה”, “נקודתיים”, “פסיק”, מספרים ומידות. בהעתקה מנוקים רווחים כפולים ורווחים בתחילת שורה.</p>
+    <p>סמנו „הקטן אחרי העתקה” כדי לצמצם את חלון האפליקציה אחרי העתקה ולהדביק במערכת בית החולים. מומלץ להתקין את האפליקציה למחשב (Chrome ← התקן) כדי שההקטנה תעבוד בצורה אמינה.</p>
   </div>
 </div>
 
@@ -212,7 +213,7 @@ footer{color:#6a7c87;font-size:.8rem;text-align:center;padding:12px}
 
  let clickTimer = null;
  let savedSel = { start: 0, end: 0 };
- const SINGLE_CLICK_DELAY_MS = 1000;
+ let suppressEditOpenUntil = 0;
 
  function openHelp() {
    helpModal.hidden = false;
@@ -431,29 +432,95 @@ footer{color:#6a7c87;font-size:.8rem;text-align:center;padding:12px}
    }
  }
  function isWordChar(ch) {
-   return /[\u0590-\u05FFa-zA-Z0-9'׳״]/.test(ch);
+   return !!ch && /[\u0590-\u05FFa-zA-Z0-9'׳״]/.test(ch);
  }
- function selectWordAtCaret(pos) {
+ function isDesktopUi() {
+   // Computer: hardware keyboard is available — open special words directly.
+   return window.matchMedia('(hover: hover) and (pointer: fine)').matches;
+ }
+ function isStandaloneApp() {
+   return window.matchMedia('(display-mode: standalone)').matches
+     || window.matchMedia('(display-mode: minimal-ui)').matches
+     || window.navigator.standalone === true;
+ }
+ function wordBoundsAt(pos) {
    const val = report.value;
    let start = Math.max(0, Math.min(pos, val.length));
    let end = start;
    while (start > 0 && isWordChar(val[start - 1])) start--;
    while (end < val.length && isWordChar(val[end])) end++;
-   if (start === end && start > 0 && isWordChar(val[start - 1])) {
-     start--;
-     while (start > 0 && isWordChar(val[start - 1])) start--;
-     end = start + 1;
-     while (end < val.length && isWordChar(val[end])) end++;
+   if (start === end) {
+     if (start > 0 && isWordChar(val[start - 1])) {
+       start--;
+       while (start > 0 && isWordChar(val[start - 1])) start--;
+       end = start + 1;
+       while (end < val.length && isWordChar(val[end])) end++;
+     } else if (end < val.length && isWordChar(val[end])) {
+       while (end < val.length && isWordChar(val[end])) end++;
+     }
    }
+   return { start, end };
+ }
+ function isInsideOrOnWord(pos) {
+   const val = report.value;
+   if (!val.length) return false;
+   // Caret on a letter, or between two letters of the same word.
+   if (pos < val.length && isWordChar(val[pos])) return true;
+   return pos > 0 && pos < val.length && isWordChar(val[pos - 1]) && isWordChar(val[pos]);
+ }
+ function selectWordAtCaret(pos) {
+   const { start, end } = wordBoundsAt(pos);
    report.focus();
    report.setSelectionRange(start, end);
    savedSel = { start, end };
+ }
+ function placeCaretInSpaceGap(pos) {
+   const val = report.value;
+   let p = Math.max(0, Math.min(pos, val.length));
+   // Prefer parking the caret on whitespace between words.
+   if (p < val.length && /\s/.test(val[p])) {
+     // already on space/newline
+   } else if (p > 0 && /\s/.test(val[p - 1])) {
+     p = p; // caret after a space is fine
+   } else if (p > 0 && isWordChar(val[p - 1]) && p < val.length && isWordChar(val[p])) {
+     // Should have been handled as word; fall through to bounds
+     selectWordAtCaret(p);
+     return;
+   }
+   report.focus();
+   report.setSelectionRange(p, p);
+   savedSel = { start: p, end: p };
+ }
+ function openEditUiForDevice() {
+   if (isDesktopUi()) showTermsPop();
+   else showChoicePop();
+ }
+ function handleReportPointerEdit(forceWord) {
+   if (wantRecording || recording) return;
+   if (Date.now() < suppressEditOpenUntil) return;
+   const start = report.selectionStart ?? 0;
+   const end = report.selectionEnd ?? start;
+   if (forceWord || (start === end && isInsideOrOnWord(start))) {
+     selectWordAtCaret(forceWord ? start : start);
+   } else if (start !== end) {
+     captureSelection();
+   } else {
+     placeCaretInSpaceGap(start);
+   }
+   openEditUiForDevice();
  }
  function padTermSpaces(term, before, after) {
    let addition = term;
    if (before && !/[\s\n]$/.test(before)) addition = ' ' + addition;
    if (after && !/^[\s\n]/.test(after)) addition = addition + ' ';
    return addition;
+ }
+ function cleanTextForCopy(text) {
+   return String(text || '')
+     .replace(/[ \t]+\n/g, '\n')
+     .replace(/\n[ \t]+/g, '\n')
+     .replace(/[ \t]{2,}/g, ' ')
+     .replace(/^\s+|\s+$/g, '');
  }
  function insertAtSelection(text, replaceSelection) {
    if (!text && text !== '') return;
@@ -524,40 +591,33 @@ footer{color:#6a7c87;font-size:.8rem;text-align:center;padding:12px}
    closeTermsPop(true);
  });
 
- report.addEventListener('click', (e) => {
+ report.addEventListener('mouseup', (e) => {
+   if (e.button !== 0) return;
    if (wantRecording || recording) return;
-   // Double-click priority: wait a full second after a single click before opening
-   // the choice popup, so a second click can become a word-selecting double-click.
-   if (e.detail >= 2) {
-     clearTimeout(clickTimer);
-     clickTimer = null;
-     return;
-   }
-   if (e.detail !== 1) return;
+   // Short delay so a double-click can cancel and take priority for word select.
    clearTimeout(clickTimer);
-   captureSelection();
    clickTimer = setTimeout(() => {
      clickTimer = null;
-     if (wantRecording || recording) return;
-     captureSelection();
-     showChoicePop();
-   }, SINGLE_CLICK_DELAY_MS);
+     handleReportPointerEdit(false);
+   }, 220);
  });
  report.addEventListener('dblclick', (e) => {
    if (wantRecording || recording) return;
    e.preventDefault();
    clearTimeout(clickTimer);
    clickTimer = null;
-   hideEditPops();
-   // Explicitly select the word under the caret — do not rely only on browser dblclick.
-   const pos = report.selectionStart ?? 0;
-   selectWordAtCaret(pos);
-   showTermsPop();
+   // Double-click always selects the whole word under the pointer.
+   requestAnimationFrame(() => {
+     const pos = report.selectionStart ?? 0;
+     selectWordAtCaret(pos);
+     openEditUiForDevice();
+   });
  });
  report.addEventListener('keydown', () => {
    // Typing means the user chose keyboard path; keep pops closed.
    clearTimeout(clickTimer);
    clickTimer = null;
+   suppressEditOpenUntil = Date.now() + 400;
    if (editChoicePop.classList.contains('open') || termsPop.classList.contains('open')) {
      hideEditPops();
    }
@@ -895,21 +955,26 @@ footer{color:#6a7c87;font-size:.8rem;text-align:center;padding:12px}
      x: window.screenX,
      y: window.screenY
    };
-   // Best-effort: shrink to a corner so the reporting system underneath is usable.
-   // (Many normal browser tabs block resize; blur still helps switch focus.)
+   // Shrink aggressively so the hospital reporting app is visible underneath.
+   // Works reliably when installed as a desktop app (standalone); tabs often block resize.
+   const targetW = isStandaloneApp() ? 380 : 420;
+   const targetH = isStandaloneApp() ? 88 : 140;
    try {
-     const w = Math.min(480, screen.availWidth);
-     const h = Math.min(160, screen.availHeight);
-     window.resizeTo(w, h);
+     window.resizeTo(targetW, targetH);
      window.moveTo(
-       Math.max(0, screen.availWidth - w - 12),
-       Math.max(0, screen.availHeight - h - 48)
+       Math.max(0, screen.availWidth - targetW - 10),
+       Math.max(0, screen.availHeight - targetH - 56)
      );
    } catch (e) {}
-   showRestoreBar('הטקסט הועתק — הדביקו במערכת הדיווח, ואז חזרו להכתבה.');
+   const resized = window.outerWidth <= targetW + 80 && window.outerHeight <= targetH + 80;
+   if (resized || isStandaloneApp()) {
+     showRestoreBar('הטקסט הועתק — הדביקו במערכת בית החולים, ואז חזרו להכתבה.');
+   } else {
+     showRestoreBar('הטקסט הועתק. בדפדפן רגיל: Alt+Tab להדבקה. להתקנת אפליקציה (Chrome ← התקן) ההקטנה אמינה יותר.');
+   }
    setTimeout(() => {
      try { window.blur(); } catch (e) {}
-   }, 60);
+   }, 80);
  }
  function restoreAppWindow() {
    hideRestoreBar();
@@ -931,13 +996,14 @@ footer{color:#6a7c87;font-size:.8rem;text-align:center;padding:12px}
 
  document.getElementById('copyBtn').addEventListener('click', async () => {
    if (!report.value.trim()) { copyStatus.textContent='אין טקסט להעתקה.'; return; }
+   const cleaned = cleanTextForCopy(report.value);
    try {
-     await navigator.clipboard.writeText(report.value);
+     await navigator.clipboard.writeText(cleaned);
      if (autoReduceChk.checked) {
-       copyStatus.textContent = 'הטקסט הועתק. מקטינים כדי להדביק במערכת הדיווח…';
+       copyStatus.textContent = 'הטקסט הועתק (רווחים נוקו). מקטינים להדבקה במערכת הדיווח…';
        reduceAppForPaste();
      } else {
-       copyStatus.textContent = 'הטקסט הועתק. אפשר להדביק אותו בכל אפליקציה.';
+       copyStatus.textContent = 'הטקסט הועתק (רווחים כפולים ותחילת שורה נוקו). אפשר להדביק בכל אפליקציה.';
      }
    } catch (e) {
      report.focus();
