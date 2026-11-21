@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="theme-color" content="#123b55">
-<title>מכתיב דוחות אולטרסאונד · v1.6</title>
+<title>מכתיב דוחות אולטרסאונד · v1.7</title>
 <style>
 :root{font-family:Arial,"Noto Sans Hebrew",sans-serif;color:#183042;background:#f3f7fa}
 *{box-sizing:border-box}
@@ -32,10 +32,9 @@ h2{font-size:1.1rem;margin:0 0 12px}
 #status{font-size:.95rem;color:#526878;margin:8px 0 10px;min-height:1.4em}
 .dot{display:inline-block;width:9px;height:9px;border-radius:50%;background:#91a5b2;margin-left:7px}
 .dot.live{background:#d92d20;box-shadow:0 0 0 4px #d92d2020}
-textarea{width:100%;min-height:245px;border:1px solid #cbd8df;border-radius:12px;padding:14px;font:1.05rem/1.75 Arial,sans-serif;resize:vertical;direction:rtl}
+.report-wrap{position:relative}
+textarea{width:100%;min-height:320px;border:1px solid #cbd8df;border-radius:12px;padding:14px;font:1.05rem/1.75 Arial,sans-serif;resize:vertical;direction:rtl}
 .small{font-size:.88rem;color:#607482;line-height:1.55}
-.chips{display:flex;flex-wrap:wrap;gap:7px}
-.chip{background:#edf3f7;color:#25485c;padding:9px 11px;border-radius:999px;font-size:.9rem}
 .actions{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px}
 .actions.below-report{margin-top:10px}
 select{padding:10px;border:1px solid #cbd8df;border-radius:10px;background:white}
@@ -48,14 +47,34 @@ footer{color:#6a7c87;font-size:.8rem;text-align:center;padding:12px}
 .modal-dialog h2{margin:0 0 12px;padding-left:36px}
 .modal-dialog p{margin:0 0 12px;color:#3d5564;line-height:1.6;font-size:.95rem}
 .modal-close{position:absolute;top:12px;left:12px;width:36px;height:36px;border-radius:50%;background:#e8f0f4;color:#183042;padding:0;font-size:1.2rem;line-height:1}
-@media(max-width:520px){body{padding:10px 9px 25px}header{padding:18px 16px}button{flex:1}.record{min-width:100%}.actions button{min-width:42%}.help-btn{flex:0 0 40px}}
+
+/* Edit choice + special-words popups */
+.edit-pop{position:absolute;z-index:40;display:none;background:#fff;border:1px solid #c9d7e0;border-radius:14px;box-shadow:0 10px 28px #163b5528;padding:10px;max-width:min(420px,calc(100% - 8px))}
+.edit-pop.open{display:block}
+.edit-choice{display:flex;gap:8px;align-items:stretch}
+.edit-choice button{flex:1;min-width:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;padding:12px 10px;background:#eef4f8;color:#183042;border-radius:12px}
+.edit-choice button:hover,.edit-choice button:focus-visible{background:#dceaf1;outline:none}
+.edit-choice .ico{font-size:1.45rem;line-height:1}
+.edit-choice .lbl{font-size:.82rem;font-weight:700}
+.terms-pop-head{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:10px}
+.terms-pop-head h3{margin:0;font-size:1rem}
+.terms-toolbar{display:flex;flex-wrap:wrap;gap:7px;align-items:center;margin-bottom:10px}
+.terms-toolbar .chip-delete{background:#f8e8ea;color:#8a1f2b;padding:9px 12px;border-radius:999px;font-size:.9rem;font-weight:700}
+.terms-toolbar .chip-delete:hover{background:#f0d0d5}
+.terms-grid{display:flex;flex-wrap:wrap;gap:7px;max-height:220px;overflow:auto}
+.terms-grid .chip,.terms-toolbar .chip{background:#edf3f7;color:#25485c;padding:9px 11px;border-radius:999px;font-size:.9rem;font-weight:700}
+.terms-grid .chip:hover{background:#dceaf1}
+.terms-pop-foot{display:flex;justify-content:flex-start;margin-top:12px}
+.terms-pop-foot .close-terms{background:#126b91;color:#fff;padding:10px 16px}
+
+@media(max-width:520px){body{padding:10px 9px 25px}header{padding:18px 16px}button{flex:1}.record{min-width:100%}.actions button{min-width:42%}.help-btn{flex:0 0 40px}.edit-pop{left:4px!important;right:4px!important;max-width:none}}
 </style>
 </head>
 <body>
 <main>
 <header>
   <div class="header-text">
-    <h1>מכתיב דוחות אולטרסאונד <span class="version" id="appVersion">v1.6</span></h1>
+    <h1>מכתיב דוחות אולטרסאונד <span class="version" id="appVersion">v1.7</span></h1>
     <p>הכתבה בעברית · עיצוב קולי, מונחים רפואיים בעברית, עריכה ושיתוף</p>
   </div>
   <button type="button" class="help-btn" id="helpBtn" aria-label="עזרה" title="עזרה">?</button>
@@ -73,38 +92,44 @@ footer{color:#6a7c87;font-size:.8rem;text-align:center;padding:12px}
     </label>
   </div>
   <div id="status"><span class="dot"></span> מוכן להכתבה. מומלץ לדבר במשפטים קצרים וברורים.</div>
-  <textarea id="report" placeholder="הכתיבו כאן את ממצאי בדיקת האולטרסאונד…
+  <div class="report-wrap" id="reportWrap">
+    <textarea id="report" placeholder="הכתיבו כאן את ממצאי בדיקת האולטרסאונד…
 
-לדוגמה: הכבד בגודל תקין, מרקמו אחיד. אין עדות להרחבת דרכי המרה."></textarea>
+לדוגמה: הכבד בגודל תקין, מרקמו אחיד. אין עדות להרחבת דרכי המרה.
+
+לחיצה בטקסט ממקמת את הסמן; לחיצה כפולה בוחרת מילה — ואז ניתן למחוק או להחליף במונח."></textarea>
+
+    <div class="edit-pop" id="editChoicePop" role="dialog" aria-label="בחירת עריכה">
+      <div class="edit-choice">
+        <button type="button" id="chooseTermsBtn" title="מונחים מיוחדים">
+          <span class="ico" aria-hidden="true">☰</span>
+          <span class="lbl">מילים מיוחדות</span>
+        </button>
+        <button type="button" id="chooseKeyboardBtn" title="מקלדת">
+          <span class="ico" aria-hidden="true">⌨</span>
+          <span class="lbl">מקלדת</span>
+        </button>
+      </div>
+    </div>
+
+    <div class="edit-pop" id="termsPop" role="dialog" aria-label="מילים מיוחדות">
+      <div class="terms-pop-head">
+        <h3>מילים מיוחדות</h3>
+      </div>
+      <div class="terms-toolbar">
+        <button type="button" class="chip-delete" id="termDeleteBtn" title="מחק בחירה / תו אחורה">⌫ מחק</button>
+      </div>
+      <div class="terms-grid" id="termsGrid"></div>
+      <div class="terms-pop-foot">
+        <button type="button" class="close-terms" id="termsCloseBtn">סגור</button>
+      </div>
+    </div>
+  </div>
   <div class="actions below-report">
     <button class="primary" id="copyBtn">העתק טקסט</button>
     <button class="secondary" id="clearBtn">נקה טקסט</button>
   </div>
   <p class="small" id="copyStatus" aria-live="polite"></p>
-</section>
-
-<section class="panel">
-  <h2>מונחים וקיצורים להוספה מהירה</h2>
-  <p class="small">לחיצה על מונח מוסיפה אותו במקום הסמן בטקסט.</p>
-  <div class="chips" id="terms">
-    <button class="chip" data-term="כבד">כבד</button>
-    <button class="chip" data-term="כיס מרה">כיס מרה</button>
-    <button class="chip" data-term="CBD">CBD</button>
-    <button class="chip" data-term="לבלב">לבלב</button>
-    <button class="chip" data-term="טחול">טחול</button>
-    <button class="chip" data-term="כליות">כליות</button>
-    <button class="chip" data-term="שלפוחית השתן">שלפוחית השתן</button>
-    <button class="chip" data-term="ערמונית">ערמונית</button>
-    <button class="chip" data-term="רחם">רחם</button>
-    <button class="chip" data-term="שחלות">שחלות</button>
-    <button class="chip" data-term="אין נוזל חופשי">אין נוזל חופשי</button>
-    <button class="chip" data-term="אין הידרונפרוזיס">אין הידרונפרוזיס</button>
-    <button class="chip" data-term="ציסטה פשוטה">ציסטה פשוטה</button>
-    <button class="chip" data-term="נגע סולידי">נגע סולידי</button>
-    <button class="chip" data-term="דופלר">דופלר</button>
-    <button class="chip" data-term="סיכום:">סיכום:</button>
-    <button class="chip" data-term="המטומה">המטומה</button>
-  </div>
 </section>
 
 <section class="panel">
@@ -127,7 +152,8 @@ footer{color:#6a7c87;font-size:.8rem;text-align:center;padding:12px}
   <div class="modal-dialog">
     <button type="button" class="modal-close" id="helpClose" aria-label="סגור">×</button>
     <h2 id="helpTitle">איך להשתמש</h2>
-    <p>לחצו על „התחל הקלטה” ודברו. הכפתור יהפוך ל„עצור”. ההכתבה מוכנסת במקום שבו נמצא הסמן. לאחר העצירה תוכלו להקליד סימני פיסוק, מונחים או תיקונים. לחיצה נוספת תמשיך להכתיב מהמיקום הנוכחי של הסמן, במצב הוספה (Insert), בלי לדרוס טקסט קיים. אפשר גם להוסיף מונחים מהכפתורים שבהמשך.</p>
+    <p>לחצו על „התחל הקלטה” ודברו. הכפתור יהפוך ל„עצור”. ההכתבה מוכנסת במקום שבו נמצא הסמן, במצב הוספה (Insert), בלי לדרוס טקסט קיים. לאחר הפסקה תוכלו לערוך: לחיצה בטקסט ממקמת את הסמן, ולחיצה כפולה בוחרת מילה. ייפתח חלון בחירה — מקלדת או מילים מיוחדות.</p>
+    <p>במילים מיוחדות: ⌫ מוחק את המילה שנבחרה (או תו אחורה), ולחיצה על מונח מחליפה את הבחירה או מוסיפה במקום הסמן. „סגור” סוגר את החלון ומעביר את הסמן לסוף הטקסט — מוכן להמשך הכתבה.</p>
     <p>הטקסט מתעצב אוטומטית: אפשר לומר “שורה חדשה”, “נקודתיים” או “פסיק”. מספרים ומידות יומרו לספרות ולקיצורים, ומונחים רפואיים מוכרים ייכתבו בעברית.</p>
   </div>
 </div>
@@ -135,17 +161,36 @@ footer{color:#6a7c87;font-size:.8rem;text-align:center;padding:12px}
 <script>
 (() => {
  const report = document.getElementById('report');
+ const reportWrap = document.getElementById('reportWrap');
  const recordBtn = document.getElementById('recordBtn');
  const status = document.getElementById('status');
  const copyStatus = document.getElementById('copyStatus');
  const helpBtn = document.getElementById('helpBtn');
  const helpModal = document.getElementById('helpModal');
  const helpClose = document.getElementById('helpClose');
+ const editChoicePop = document.getElementById('editChoicePop');
+ const termsPop = document.getElementById('termsPop');
+ const termsGrid = document.getElementById('termsGrid');
+ const chooseTermsBtn = document.getElementById('chooseTermsBtn');
+ const chooseKeyboardBtn = document.getElementById('chooseKeyboardBtn');
+ const termDeleteBtn = document.getElementById('termDeleteBtn');
+ const termsCloseBtn = document.getElementById('termsCloseBtn');
  const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
  let recognition = null, recording = false, dictationPosition = 0;
  let wantRecording = false, pauseNewlinePending = false;
  let hadSpeechInSession = false, pendingInterim = '';
  let lastRecognitionError = null, liveInterimStart = null, restartPending = false;
+
+ const SPECIAL_TERMS = [
+   'כבד', 'כיס מרה', 'CBD', 'לבלב', 'טחול', 'כליות',
+   'שלפוחית השתן', 'ערמונית', 'רחם', 'שחלות',
+   'אין נוזל חופשי', 'אין הידרונפרוזיס', 'ציסטה פשוטה',
+   'נגע סולידי', 'דופלר', 'סיכום:', 'המטומה'
+ ];
+
+ let clickTimer = null;
+ let ignoreNextClick = false;
+ let savedSel = { start: 0, end: 0 };
 
  function openHelp() {
    helpModal.hidden = false;
@@ -163,7 +208,11 @@ footer{color:#6a7c87;font-size:.8rem;text-align:center;padding:12px}
    if (e.target.matches('[data-close-help]')) closeHelp();
  });
  document.addEventListener('keydown', (e) => {
-   if (e.key === 'Escape' && helpModal.classList.contains('open')) closeHelp();
+   if (e.key === 'Escape') {
+     if (helpModal.classList.contains('open')) closeHelp();
+     else if (termsPop.classList.contains('open')) closeTermsPop(false);
+     else if (editChoicePop.classList.contains('open')) hideEditPops();
+   }
  });
 
  function setStatus(message, live=false) {
@@ -249,6 +298,173 @@ footer{color:#6a7c87;font-size:.8rem;text-align:center;padding:12px}
    if (focus) report.focus();
    report.setSelectionRange(position, position);
  }
+ function captureSelection() {
+   savedSel = {
+     start: report.selectionStart ?? 0,
+     end: report.selectionEnd ?? 0
+   };
+ }
+ function restoreSelection(focus = true) {
+   const len = report.value.length;
+   const start = Math.max(0, Math.min(savedSel.start, len));
+   const end = Math.max(0, Math.min(savedSel.end, len));
+   if (focus) report.focus();
+   report.setSelectionRange(start, end);
+ }
+ function placeEditPop(pop) {
+   // Anchor near the caret line using textarea metrics; fall back below the field.
+   const wrapRect = reportWrap.getBoundingClientRect();
+   const style = window.getComputedStyle(report);
+   const lineHeight = parseFloat(style.lineHeight) || 28;
+   const paddingTop = parseFloat(style.paddingTop) || 14;
+   const textBefore = report.value.slice(0, report.selectionStart || 0);
+   const lines = textBefore.split('\n');
+   const row = Math.max(0, lines.length - 1);
+   const top = Math.min(
+     report.offsetTop + paddingTop + (row * lineHeight) - report.scrollTop + lineHeight + 6,
+     report.offsetTop + report.clientHeight - 8
+   );
+   pop.style.top = Math.max(report.offsetTop + 8, top) + 'px';
+   pop.style.right = '10px';
+   pop.style.left = 'auto';
+ }
+ function hideEditPops() {
+   editChoicePop.classList.remove('open');
+   termsPop.classList.remove('open');
+ }
+ function showChoicePop() {
+   if (wantRecording || recording) return;
+   termsPop.classList.remove('open');
+   placeEditPop(editChoicePop);
+   editChoicePop.classList.add('open');
+ }
+ function showTermsPop() {
+   if (wantRecording || recording) return;
+   editChoicePop.classList.remove('open');
+   placeEditPop(termsPop);
+   termsPop.classList.add('open');
+   termDeleteBtn.focus();
+ }
+ function closeTermsPop(moveToEnd) {
+   hideEditPops();
+   if (moveToEnd) {
+     const end = report.value.length;
+     dictationPosition = end;
+     report.focus();
+     report.setSelectionRange(end, end);
+     setStatus('הסמן בסוף הטקסט — מוכן להמשך הכתבה.');
+   } else {
+     restoreSelection(true);
+   }
+ }
+ function insertAtSelection(text, replaceSelection) {
+   if (!text && text !== '') return;
+   restoreSelection(true);
+   const start = report.selectionStart;
+   const end = report.selectionEnd;
+   // Push/insert mode: replace only an explicit selection; otherwise insert at caret.
+   const from = replaceSelection ? start : start;
+   const to = replaceSelection ? end : start;
+   let addition = text;
+   if (!replaceSelection || start === end) {
+     const before = report.value.slice(0, start);
+     if (addition && before && !/[\s\n]$/.test(before) && !/^[\s\n,.;:!?…]/.test(addition)) {
+       addition = ' ' + addition;
+     }
+   }
+   report.setRangeText(addition, from, to, 'end');
+   savedSel = { start: report.selectionStart, end: report.selectionEnd };
+   dictationPosition = report.selectionEnd;
+   report.dispatchEvent(new Event('input', { bubbles: true }));
+ }
+ function deleteSelectionOrBackspace() {
+   restoreSelection(true);
+   const start = report.selectionStart;
+   const end = report.selectionEnd;
+   if (start !== end) {
+     report.setRangeText('', start, end, 'end');
+   } else if (start > 0) {
+     report.setRangeText('', start - 1, start, 'end');
+   } else {
+     return;
+   }
+   savedSel = { start: report.selectionStart, end: report.selectionEnd };
+   dictationPosition = report.selectionEnd;
+   report.dispatchEvent(new Event('input', { bubbles: true }));
+ }
+
+ // Build special-term buttons once
+ SPECIAL_TERMS.forEach((term) => {
+   const btn = document.createElement('button');
+   btn.type = 'button';
+   btn.className = 'chip';
+   btn.textContent = term;
+   btn.dataset.term = term;
+   btn.addEventListener('click', () => {
+     const hasSelection = savedSel.start !== savedSel.end;
+     insertAtSelection(term, hasSelection);
+   });
+   termsGrid.appendChild(btn);
+ });
+
+ chooseTermsBtn.addEventListener('click', (e) => {
+   e.preventDefault();
+   e.stopPropagation();
+   showTermsPop();
+ });
+ chooseKeyboardBtn.addEventListener('click', (e) => {
+   e.preventDefault();
+   e.stopPropagation();
+   hideEditPops();
+   restoreSelection(true);
+   setStatus('מצב מקלדת — הקלידו במקום הסמן. לאחר מכן ניתן להמשיך בהכתבה.');
+ });
+ termDeleteBtn.addEventListener('click', (e) => {
+   e.preventDefault();
+   e.stopPropagation();
+   deleteSelectionOrBackspace();
+ });
+ termsCloseBtn.addEventListener('click', (e) => {
+   e.preventDefault();
+   e.stopPropagation();
+   closeTermsPop(true);
+ });
+
+ report.addEventListener('click', () => {
+   if (wantRecording || recording) return;
+   if (ignoreNextClick) {
+     ignoreNextClick = false;
+     return;
+   }
+   // Defer so a double-click can cancel the single-click choice popup.
+   clearTimeout(clickTimer);
+   clickTimer = setTimeout(() => {
+     captureSelection();
+     showChoicePop();
+   }, 280);
+ });
+ report.addEventListener('dblclick', () => {
+   if (wantRecording || recording) return;
+   clearTimeout(clickTimer);
+   ignoreNextClick = true;
+   // Let the browser finish selecting the word, then open special words first.
+   setTimeout(() => {
+     captureSelection();
+     showTermsPop();
+   }, 0);
+ });
+ report.addEventListener('keydown', () => {
+   // Typing means the user chose keyboard path; keep pops closed.
+   if (editChoicePop.classList.contains('open') || termsPop.classList.contains('open')) {
+     hideEditPops();
+   }
+ });
+ document.addEventListener('pointerdown', (e) => {
+   if (!editChoicePop.classList.contains('open') && !termsPop.classList.contains('open')) return;
+   if (reportWrap.contains(e.target)) return;
+   hideEditPops();
+ });
+
  function beginRecognitionSession() {
    recognition = new SpeechRecognition();
    recognition.lang = document.getElementById('speechLang').value || 'he-IL';
@@ -364,6 +580,7 @@ footer{color:#6a7c87;font-size:.8rem;text-align:center;padding:12px}
    rec.onstart = () => {
      recording = true;
      lastRecognitionError = null;
+     hideEditPops();
      recordBtn.classList.add('active');
      recordBtn.textContent = '■ עצור';
      setStatus('ההכתבה פעילה. דבר כעת.', true);
@@ -457,11 +674,10 @@ footer{color:#6a7c87;font-size:.8rem;text-align:center;padding:12px}
      return;
    }
    if (wantRecording || recording) return;
-   // Resume from the user's current cursor/selection. If text is selected, new
-   // dictation replaces only that selection; otherwise it is inserted there.
+   hideEditPops();
+   // Resume from the user's current cursor/selection. Dictation is always
+   // insert-mode and must not replace or delete existing text.
    dictationPosition = report.selectionStart ?? report.value.length;
-   // If a range is selected, collapse to its beginning: dictation is always
-   // insert-mode and must not replace or delete the selected/existing text.
    pauseNewlinePending = false;
    hadSpeechInSession = false;
    pendingInterim = '';
@@ -492,12 +708,13 @@ footer{color:#6a7c87;font-size:.8rem;text-align:center;padding:12px}
  recordBtn.addEventListener('click', () => (wantRecording || recording) ? stop() : start());
 
  document.getElementById('clearBtn').addEventListener('click', () => {
-   if (report.value && confirm('למחוק את כל הטקסט?')) { report.value=''; copyStatus.textContent=''; }
+   if (report.value && confirm('למחוק את כל הטקסט?')) {
+     report.value = '';
+     copyStatus.textContent = '';
+     hideEditPops();
+     dictationPosition = 0;
+   }
  });
- document.querySelectorAll('[data-term]').forEach(btn => btn.addEventListener('click', () => {
-   const term = btn.dataset.term, startPos=report.selectionStart, endPos=report.selectionEnd;
-   report.setRangeText(term, startPos, endPos, 'end'); report.focus(); report.dispatchEvent(new Event('input', {bubbles:true}));
- }));
  document.getElementById('copyBtn').addEventListener('click', async () => {
    if (!report.value.trim()) { copyStatus.textContent='אין טקסט להעתקה.'; return; }
    try { await navigator.clipboard.writeText(report.value); copyStatus.textContent='הטקסט הועתק. אפשר להדביק אותו בכל אפליקציה.'; }
