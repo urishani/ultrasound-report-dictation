@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="theme-color" content="#123b55">
-<title>מכתיב דוחות אולטרסאונד · v1.12</title>
+<title>מכתיב דוחות אולטרסאונד · v1.13</title>
 <link rel="manifest" href="manifest.webmanifest">
 <style>
 :root{font-family:Arial,"Noto Sans Hebrew",sans-serif;color:#183042;background:#f3f7fa}
@@ -30,6 +30,8 @@ button:disabled{opacity:.45;cursor:not-allowed}
 .record .mic-ico{display:inline-flex;width:1.3em;height:1.3em;flex-shrink:0}
 .record .mic-ico svg{width:100%;height:100%;fill:currentColor;stroke:currentColor}
 .secondary{background:#e8f0f4;color:#183042}
+.danger{background:#f3d6da;color:#8a1f2b}
+.danger:hover,.danger:focus-visible{background:#ecc0c6;outline:none}
 .share{background:#e8f5ed;color:#155b35}
 h2{font-size:1.1rem;margin:0 0 12px}
 #status{font-size:.95rem;color:#526878;margin:8px 0 10px;min-height:1.4em}
@@ -83,7 +85,7 @@ footer{color:#6a7c87;font-size:.8rem;text-align:center;padding:12px}
 <main>
 <header>
   <div class="header-text">
-    <h1>מכתיב דוחות אולטרסאונד <span class="version" id="appVersion">v1.12</span></h1>
+    <h1>מכתיב דוחות אולטרסאונד <span class="version" id="appVersion">v1.13</span></h1>
     <p>הכתבה בעברית · עיצוב קולי, מונחים רפואיים בעברית, עריכה ושיתוף</p>
   </div>
   <button type="button" class="help-btn" id="helpBtn" aria-label="עזרה" title="עזרה">?</button>
@@ -138,8 +140,8 @@ footer{color:#6a7c87;font-size:.8rem;text-align:center;padding:12px}
     </div>
   </div>
   <div class="actions below-report">
-    <button class="primary" id="copyBtn">העתק טקסט</button>
-    <button class="secondary" id="clearBtn">נקה טקסט</button>
+    <button class="primary" id="copyBtn">העתק</button>
+    <button class="danger" id="newDictationBtn" type="button" hidden>הכתבה חדשה</button>
     <label class="auto-reduce" title="אחרי העתקה — הקטנת החלון כדי להדביק במערכת הדיווח">
       <input type="checkbox" id="autoReduceChk">
       <span>הקטן אחרי העתקה</span>
@@ -918,13 +920,23 @@ footer{color:#6a7c87;font-size:.8rem;text-align:center;padding:12px}
  }
  recordBtn.addEventListener('click', () => (wantRecording || recording) ? stop() : start());
 
- document.getElementById('clearBtn').addEventListener('click', () => {
-   if (report.value && confirm('למחוק את כל הטקסט?')) {
-     report.value = '';
-     copyStatus.textContent = '';
-     hideEditPops();
-     dictationPosition = 0;
-   }
+ const newDictationBtn = document.getElementById('newDictationBtn');
+ function syncNewDictationBtn() {
+   const hasText = !!report.value.trim();
+   newDictationBtn.hidden = !hasText;
+ }
+ syncNewDictationBtn();
+ report.addEventListener('input', syncNewDictationBtn);
+ newDictationBtn.addEventListener('click', () => {
+   report.value = '';
+   copyStatus.textContent = '';
+   hideEditPops();
+   dictationPosition = 0;
+   savedSel = { start: 0, end: 0 };
+   syncNewDictationBtn();
+   setRecordButton(false);
+   setStatus('הכתבה חדשה — מוכנים להתחיל.');
+   report.focus();
  });
  const autoReduceChk = document.getElementById('autoReduceChk');
  const restoreBar = document.getElementById('restoreBar');
