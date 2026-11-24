@@ -353,9 +353,10 @@ body.format-wide #chooseKeyboardBtn{display:none}
      '$1 – $2',
    );
    s = s.replace(
-     new RegExp(`(${word})[ \\t]+מקף(?:ים)?(?:[ \\t]+מחבר)?[ \\t]+(${word})`, 'g'),
-     '$1-$2',
-   );
+    // מקף (final ף) or מקפים (פ+ים) — not /מקפים?/ which never matched מקף.
+    new RegExp(`(${word})[ \\t]+מקפ(?:ף|ים)(?:[ \\t]+מחבר)?[ \\t]+(${word})`, 'g'),
+    '$1-$2',
+  );
    return s;
  }
 
