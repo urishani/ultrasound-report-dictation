@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="theme-color" content="#123b55">
-<title>מכתיב דוחות אולטרסאונד · v1.21</title>
+<title>מכתיב דוחות אולטרסאונד · v1.22</title>
 <link rel="manifest" href="manifest.webmanifest">
 <style>
 :root{font-family:Arial,"Noto Sans Hebrew",sans-serif;color:#183042;background:#f3f7fa}
@@ -114,7 +114,7 @@ body.format-wide #chooseKeyboardBtn{display:none}
 <main>
 <header>
   <div class="header-text">
-    <h1>מכתיב דוחות אולטרסאונד <span class="version" id="appVersion">v1.21</span></h1>
+    <h1>מכתיב דוחות אולטרסאונד <span class="version" id="appVersion">v1.22</span></h1>
     <p>הכתבה בעברית · עיצוב קולי, מונחים רפואיים בעברית, עריכה ושיתוף</p>
   </div>
   <button type="button" class="help-btn" id="helpBtn" aria-label="עזרה" title="עזרה">?</button>
@@ -731,7 +731,8 @@ body.format-wide #chooseKeyboardBtn{display:none}
 
    // Close parenthesis: no space before; space after unless end / newline / more closers / punct
    s = s.replace(/[ \t]+\)/g, ')');
-   s = s.replace(/\)(?=[^\s\n).,;:!?–—-"])/g, ') ');
+   // Keep "-" at end of the class so it is literal (not a broken unicode range).
+  s = s.replace(/\)(?=[^\s\n).,;:!?–—"-])/g, ') ');
 
    // Separating dash: spaces on both sides → " – "
    s = s.replace(/[ \t]+[–—−-][ \t]+/g, ' – ');
