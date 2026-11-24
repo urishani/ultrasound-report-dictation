@@ -215,6 +215,7 @@ body.format-wide #chooseKeyboardBtn{display:none}
     <p>לחצו על „התחל הקלטה” ודברו. לחיצה בתוך מילה בוחרת את המילה; לחיצה על רווח ממקמת את הסמן. בתחתית המסך בחרו פורמט: רחב (מחשב) או צר (טלפון). ברחב נפתח פאנל מילים מיוחדות מתחת לשורה שנערכת (בלי כפתור מקלדת). בצר מוצגת גם בחירת מקלדת.</p>
     <p>סמנו „סגור אחרי בחירה” כדי שאחרי מחיקה או מונח הפאנל ייסגר מיד (ההגדרה נשמרת). „סגור” מעביר את הסמן לסוף הטקסט.</p>
     <p>הטקסט מתעצב אוטומטית: “שורה חדשה”, “נקודתיים”, “פסיק”, מספרים ומידות. בלחיצה על „העתק” מנוקים רווחים כפולים ורווחים בתחילת שורה — גם בחלון וגם בלוח ההעתקה.</p>
+    <p>סימני פיסוק נוספים: „פתח סוגריים” <span dir="ltr">(</span>, „סגור סוגריים” <span dir="ltr">)</span>, „קו תחתון” <span dir="ltr">_</span>, „מרכאות” <span dir="ltr">"</span>. באנגלית: open parenthesis, close parenthesis, underscore, quotes. הסוגר הפותח נצמד למילה שאחריו, הסוגר הסוגר למילה שלפניו, קו תחתון מחבר בלי רווח, ומרכאות עוטפות את הביטוי.</p>
     <p>סמנו „הקטן אחרי העתקה” כדי לצמצם את חלון האפליקציה אחרי העתקה ולהדביק במערכת בית החולים. מומלץ להתקין את האפליקציה למחשב (Chrome ← התקן) כדי שההקטנה תעבוד בצורה אמינה.</p>
   </div>
 </div>
@@ -299,6 +300,13 @@ body.format-wide #chooseKeyboardBtn{display:none}
    [/\bcolons?\b/gi, ':'],
    [/\bcommas?\b/gi, ','],
    [/\bfull[\s-]?stops?\b/gi, '.'], [/\bperiods?\b/gi, '.'],
+   [/\b(?:open|left)[\s-]?(?:parentheses|parenthesis|parens|paren)\b/gi, '('],
+   [/\b(?:close|right)[\s-]?(?:parentheses|parenthesis|parens|paren)\b/gi, ')'],
+   [/\bunder[\s-]?scores?\b/gi, '_'],
+   [/\b(?:open|close|end)[\s-]?quotes?\b/gi, '"'],
+   [/\bun[\s-]?quotes?\b/gi, '"'],
+   [/\bquotation[\s-]?marks?\b/gi, '"'],
+   [/\bquotes?\b/gi, '"'],
    // Hebrew: allow spaces/tabs between words (not newlines) so ASR splits still match
    [/שורה[ \t]*חדשה/g, '\n'], [/שורות[ \t]*חדשות/g, '\n'],
    [/שורה[ \t]*הבאה/g, '\n'], [/לשורה[ \t]*חדשה/g, '\n'], [/ירידת[ \t]*שורה/g, '\n'],
@@ -308,15 +316,82 @@ body.format-wide #chooseKeyboardBtn{display:none}
    [/נקודות?[ \t]*תיים/g, ':'], [/נקודותיים/g, ':'], [/נקודתיים/g, ':'], [/נקודתים/g, ':'],
    [/נקודה[ \t]*תיים/g, ':'], [/נקודות[ \t]*יים/g, ':'],
    [/פסיקים/g, ','], [/פסיק/g, ','],
-   [/סימן[ \t]*נקודה/g, '.'], [/נקודה/g, '.']
+   [/סימן[ \t]*נקודה/g, '.'], [/נקודה/g, '.'],
+   // Parentheses, underscore, quotes — and close ASR hearings of the same phrases
+   [/פותח[ \t]*סוגריי?ם/g, '('], [/פתח[ \t]*סוגריי?ם/g, '('],
+   [/סוגריי?ם[ \t]*(?:פתוחים|פתוח)/g, '('],
+   [/סוגר[ \t]*סוגריי?ם/g, ')'], [/סגור[ \t]*סוגריי?ם/g, ')'],
+   [/סוגריי?ם[ \t]*(?:סגורים|סגור)/g, ')'],
+   [/קו[ \t]*תחתו[ןנ](?![\u0590-\u05FF])/g, '_'], [/קו[ \t]*תחתי(?![\u0590-\u05FF])/g, '_'],
+   [/מי?רכאות/g, '"'], [/מי?רכאה/g, '"']
  ];
 
  function applyVoiceCommands(text) {
    for (const [pattern, replacement] of VOICE_COMMANDS) text = text.replace(pattern, replacement);
    return text
      .replace(/[ \t]+\n/g, '\n')
-     .replace(/[ \t]+([,:.])/g, '$1')
+     .replace(/[ \t]+([,:.)])/g, '$1')
+     .replace(/\([ \t]+/g, '(')
+     .replace(/[ \t]*_[ \t]*/g, '_')
      .replace(/ {2,}/g, ' ');
+ }
+
+ // No extra space before closing punctuation or underscore, and no space after "(" or "_".
+ function shouldPrefixSpace(before, addition) {
+   if (!addition || !before) return false;
+   if (/[\s\n]$/.test(before)) return false;
+   if (/^[\s\n,.;:!?)_]/.test(addition)) return false;
+   if (/\($/.test(before)) return false;
+   if (/_$/.test(before) && /^[\p{L}\p{N}]/u.test(addition)) return false;
+   return true;
+ }
+
+ // Pair " marks in the full report so an opening quote drops the space after it
+ // and a closing quote drops the space before it. Only quotes in the edited span
+ // (plus a quote sitting immediately before that span) are adjusted.
+ function tightenQuotesAround(start, end) {
+   const text = report.value;
+   if (!text) return;
+   let from = Math.max(0, Math.min(start, text.length));
+   const to = Math.max(from, Math.min(end, text.length));
+   if (from > 0 && text[from - 1] === '"') from--;
+
+   const quoteIdx = [];
+   for (let i = 0; i < text.length; i++) if (text[i] === '"') quoteIdx.push(i);
+   const drop = new Set();
+   for (let n = 0; n < quoteIdx.length; n++) {
+     const idx = quoteIdx[n];
+     if (idx < from || idx >= to) continue;
+     if (n % 2 === 0) {
+       for (let j = idx + 1; j < text.length && (text[j] === ' ' || text[j] === '\t'); j++) drop.add(j);
+     } else {
+       for (let j = idx - 1; j >= 0 && (text[j] === ' ' || text[j] === '\t'); j--) drop.add(j);
+     }
+   }
+   if (!drop.size) return;
+
+   const map = new Array(text.length + 1);
+   let ni = 0;
+   let first = text.length;
+   let last = -1;
+   for (let i = 0; i < text.length; i++) {
+     map[i] = ni;
+     if (drop.has(i)) {
+       if (i < first) first = i;
+       if (i > last) last = i;
+     } else {
+       ni++;
+     }
+   }
+   map[text.length] = ni;
+   let middle = '';
+   for (let i = first; i <= last; i++) if (!drop.has(i)) middle += text[i];
+   const remap = (pos) => map[Math.max(0, Math.min(pos ?? 0, text.length))];
+   report.setRangeText(middle, first, last + 1, 'preserve');
+   if (liveInterimStart !== null) liveInterimStart = remap(liveInterimStart);
+   dictationPosition = remap(dictationPosition);
+   savedSel = { start: remap(savedSel.start), end: remap(savedSel.end) };
+   report.setSelectionRange(dictationPosition, dictationPosition);
  }
 
  function normalizeDictation(input) {
@@ -338,7 +413,7 @@ body.format-wide #chooseKeyboardBtn{display:none}
    };
    for (const key of Object.keys(numbers).sort((a,b)=>b.length-a.length)) {
      const escaped = key.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-     const re = new RegExp('(^|[\\s,;:])' + escaped + '(?=$|[\\s,;:.])', 'gi');
+     const re = new RegExp('(^|[\\s,;:(_"״])' + escaped + '(?=$|[\\s,;:.)_"״])', 'gi');
      text = text.replace(re, (match, prefix) => prefix + numbers[key]);
    }
 
@@ -374,9 +449,11 @@ body.format-wide #chooseKeyboardBtn{display:none}
    const start = Math.max(0, end - 140);
    const slice = report.value.slice(start, end);
    const next = applyVoiceCommands(slice);
-   if (next === slice) return;
-   report.setRangeText(next, start, end, 'end');
-   dictationPosition = report.selectionEnd;
+   if (next !== slice) {
+     report.setRangeText(next, start, end, 'end');
+     dictationPosition = report.selectionEnd;
+   }
+   tightenQuotesAround(start, dictationPosition);
    report.dispatchEvent(new Event('input', { bubbles: true }));
  }
 
@@ -780,31 +857,32 @@ body.format-wide #chooseKeyboardBtn{display:none}
    const shown = isFinal ? normalizeDictation(text) : applyVoiceCommands(text);
    if (!shown && liveInterimStart === null) return;
 
+   let rangeStart = 0;
    if (liveInterimStart === null) {
      liveInterimStart = Math.max(0, Math.min(dictationPosition, report.value.length));
+     rangeStart = liveInterimStart;
      let addition = shown;
      const before = report.value.slice(0, liveInterimStart);
-     if (addition && before && !/[\s\n]$/.test(before) && !/^[\s\n,.;:!?]/.test(addition)) {
-       addition = ' ' + addition;
-     }
+     if (shouldPrefixSpace(before, addition)) addition = ' ' + addition;
      report.setRangeText(addition, liveInterimStart, liveInterimStart, 'end');
    } else {
      const from = Math.max(0, Math.min(liveInterimStart, report.value.length));
      const to = Math.max(0, Math.min(dictationPosition, report.value.length));
+     rangeStart = from;
      const before = report.value.slice(0, from);
      let replacement = shown;
-     if (replacement && before && !/[\s\n]$/.test(before) && !/^[\s\n,.;:!?]/.test(replacement)) {
-       replacement = ' ' + replacement;
-     }
+     if (shouldPrefixSpace(before, replacement)) replacement = ' ' + replacement;
      report.setRangeText(replacement, from, to, 'end');
    }
    dictationPosition = report.selectionEnd;
-   report.dispatchEvent(new Event('input', { bubbles: true }));
    pauseNewlinePending = false;
 
    if (isFinal) {
      liveInterimStart = null;
      reinterpretTrailingCommands();
+   } else {
+     tightenQuotesAround(rangeStart, dictationPosition);
+     report.dispatchEvent(new Event('input', { bubbles: true }));
    }
  }
  function writeLiveInterim(text) {
@@ -852,9 +930,7 @@ body.format-wide #chooseKeyboardBtn{display:none}
      if (normalized !== slice) {
        const before = report.value.slice(0, from);
        let replacement = normalized;
-       if (replacement && before && !/[\s\n]$/.test(before) && !/^[\s\n,.;:!?]/.test(replacement)) {
-         replacement = ' ' + replacement;
-       }
+       if (shouldPrefixSpace(before, replacement)) replacement = ' ' + replacement;
        report.setRangeText(replacement, from, to, 'end');
        dictationPosition = report.selectionEnd;
        report.dispatchEvent(new Event('input', { bubbles: true }));
