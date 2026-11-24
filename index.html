@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="theme-color" content="#123b55">
-<title>מכתיב דוחות אולטרסאונד · v1.19</title>
+<title>מכתיב דוחות אולטרסאונד · v1.21</title>
 <link rel="manifest" href="manifest.webmanifest">
 <style>
 :root{font-family:Arial,"Noto Sans Hebrew",sans-serif;color:#183042;background:#f3f7fa}
@@ -114,7 +114,7 @@ body.format-wide #chooseKeyboardBtn{display:none}
 <main>
 <header>
   <div class="header-text">
-    <h1>מכתיב דוחות אולטרסאונד <span class="version" id="appVersion">v1.19</span></h1>
+    <h1>מכתיב דוחות אולטרסאונד <span class="version" id="appVersion">v1.21</span></h1>
     <p>הכתבה בעברית · עיצוב קולי, מונחים רפואיים בעברית, עריכה ושיתוף</p>
   </div>
   <button type="button" class="help-btn" id="helpBtn" aria-label="עזרה" title="עזרה">?</button>
@@ -218,8 +218,8 @@ body.format-wide #chooseKeyboardBtn{display:none}
     <h2 id="helpTitle">איך להשתמש</h2>
     <p>לחצו על „התחל הקלטה” ודברו. לחיצה בתוך מילה בוחרת את המילה; לחיצה על רווח ממקמת את הסמן. בתחתית המסך בחרו פורמט: רחב (מחשב) או צר (טלפון). ברחב נפתח פאנל מילים מיוחדות מתחת לשורה שנערכת (בלי כפתור מקלדת). בצר מוצגת גם בחירת מקלדת.</p>
     <p>סמנו „סגור אחרי בחירה” כדי שאחרי מחיקה או מונח הפאנל ייסגר מיד (ההגדרה נשמרת). „סגור” מעביר את הסמן לסוף הטקסט.</p>
-    <p>הטקסט מתעצב אוטומטית: “שורה חדשה”, “נקודתיים”, “פסיק”, מספרים ומידות. בלחיצה על „העתק” מנוקים רווחים כפולים ורווחים בתחילת שורה — גם בחלון וגם בלוח ההעתקה.</p>
-    <p>סימני פיסוק נוספים: „פתח סוגריים” <span dir="ltr">(</span>, „סגור סוגריים” <span dir="ltr">)</span>, „קו תחתון” <span dir="ltr">_</span>, „מרכאות” <span dir="ltr">"</span>. באנגלית: open parenthesis, close parenthesis, underscore, quotes. הסוגר הפותח נצמד למילה שאחריו, הסוגר הסוגר למילה שלפניו, קו תחתון מחבר בלי רווח, ומרכאות עוטפות את הביטוי.</p>
+    <p>בהעתקה מסודר הטקסט: רווחים כפולים → בודד (אחרי נקודה נשארים שני רווחים); נקודה/פסיק/נקודתיים נצמדים למילה שלפניהם; <span dir="ltr">(</span> עם רווח לפניו ובלי רווח אחריו; <span dir="ltr">)</span> בלי רווח לפניו ועם רווח אחריו; מרכאות נפתחות/נסגרות בהתאמה.</p>
+    <p>מקף מחבר מצמיד שתי מילים בלי רווח (<span dir="ltr">מילה-מילה</span>). קו מפריד (דש) מפריד חלקי משפט עם רווח לפני ואחרי (<span dir="ltr"> – </span>). גם: סוגריים, קו תחתון, מרכאות בקול.</p>
     <p>סמנו „הקטן אחרי העתקה” כדי לצמצם את חלון האפליקציה אחרי העתקה ולהדביק במערכת בית החולים. מומלץ להתקין את האפליקציה למחשב (Chrome ← התקן) כדי שההקטנה תעבוד בצורה אמינה.</p>
   </div>
 </div>
@@ -260,7 +260,10 @@ body.format-wide #chooseKeyboardBtn{display:none}
    'כבד', 'כיס מרה', 'CBD', 'לבלב', 'טחול', 'כליות',
    'שלפוחית השתן', 'ערמונית', 'רחם', 'שחלות',
    'אין נוזל חופשי', 'אין הידרונפרוזיס', 'ציסטה פשוטה',
-   'נגע סולידי', 'דופלר', 'סיכום:', 'המטומה'
+   'נגע סולידי', 'דופלר', 'סיכום:', 'המטומה',
+   // מקף מחבר: מילה-מילה · קו מפריד: רווח – רווח
+   { label: 'מקף', insert: '-', kind: 'hyphen' },
+   { label: 'קו מפריד', insert: '–', kind: 'dash' }
  ];
 
  let clickTimer = null;
@@ -327,16 +330,27 @@ body.format-wide #chooseKeyboardBtn{display:none}
    [/סוגר[ \t]*סוגריי?ם/g, ')'], [/סגור[ \t]*סוגריי?ם/g, ')'],
    [/סוגריי?ם[ \t]*(?:סגורים|סגור)/g, ')'],
    [/קו[ \t]*תחתו[ןנ](?![\u0590-\u05FF])/g, '_'], [/קו[ \t]*תחתי(?![\u0590-\u05FF])/g, '_'],
-   [/מי?רכאות/g, '"'], [/מי?רכאה/g, '"']
+   [/מי?רכאות/g, '"'], [/מי?רכאה/g, '"'],
+   // Connecting hyphen (מקף) glues neighboring words; separating dash (קו מפריד / דש) keeps spaces.
+   // Longer phrases first so "מקף דש" / "מקף מחבר" are not eaten by bare "מקף".
+   [/\bhyphens?\b/gi, '-'],
+   [/(\S)[ \t]+מקף[ \t]*מחבר[ \t]+(?=\S)/g, '$1-'],
+   [/(\S)[ \t]+מקף[ \t]*דש[ \t]+(?=\S)/g, '$1 – '],
+   [/(\S)[ \t]+קו[ \t]*מפריד[ \t]+(?=\S)/g, '$1 – '],
+   [/(\S)[ \t]+מקפים?[ \t]+(?=\S)/g, '$1-'],
+   [/\bem[\s-]?dashes?\b/gi, ' – '], [/\bdashes?\b/gi, ' – '],
+   [/(^|[ \t\n])דש(?=$|[ \t\n])/g, '$1 – ']
  ];
 
  function applyVoiceCommands(text) {
    for (const [pattern, replacement] of VOICE_COMMANDS) text = text.replace(pattern, replacement);
+   // Light cleanup only — full typography runs on copy via cleanTextForCopy.
    return text
      .replace(/[ \t]+\n/g, '\n')
-     .replace(/[ \t]+([,:.)])/g, '$1')
+     .replace(/[ \t]+([,.:)])/g, '$1')
      .replace(/\([ \t]+/g, '(')
      .replace(/[ \t]*_[ \t]*/g, '_')
+     .replace(/[ \t]+[–—−-][ \t]+/g, ' – ')
      .replace(/ {2,}/g, ' ');
  }
 
@@ -691,14 +705,86 @@ body.format-wide #chooseKeyboardBtn{display:none}
    if (after && !/^[\s\n]/.test(after)) addition = addition + ' ';
    return addition;
  }
+
+ const WORD_CHAR = /[\u0590-\u05FFa-zA-Z0-9]/;
+
+ /**
+  * Typography on copy:
+  * - collapse extra spaces, but keep two spaces after "." before a new sentence
+  * - attach , . : to the previous word
+  * - "(" : space before, no space after · ")" : no space before, space after
+  * - quotes: open has space before / no space after; close has no space before / space after
+  * - connecting hyphen keeps word-word; separating dash is " – "
+  */
  function cleanTextForCopy(text) {
-   return String(text || '')
-     .replace(/[ \t]+\n/g, '\n')
-     .replace(/\n[ \t]+/g, '\n')
-     .replace(/[ \t]{2,}/g, ' ')
-     .replace(/^\s+|\s+$/g, '');
+   let s = String(text || '');
+
+   // Line edges
+   s = s.replace(/[ \t]+\n/g, '\n').replace(/\n[ \t]+/g, '\n');
+
+   // Attach comma / period / colon to previous word
+   s = s.replace(/[ \t]+([,.:])/g, '$1');
+
+   // Open parenthesis: space before (not at line start), no space after
+   s = s.replace(/([^\s\n(])\(/g, '$1 (');
+   s = s.replace(/\([ \t]+/g, '(');
+
+   // Close parenthesis: no space before; space after unless end / newline / more closers / punct
+   s = s.replace(/[ \t]+\)/g, ')');
+   s = s.replace(/\)(?=[^\s\n).,;:!?–—-"])/g, ') ');
+
+   // Separating dash: spaces on both sides → " – "
+   s = s.replace(/[ \t]+[–—−-][ \t]+/g, ' – ');
+   // Connecting hyphen: glue single-sided stray spaces (מילה- מילה / מילה -מילה)
+   s = s.replace(
+     /([\u0590-\u05FFa-zA-Z0-9])[ \t]+-(?=[\u0590-\u05FFa-zA-Z0-9])/g,
+     '$1-',
+   );
+   s = s.replace(
+     /([\u0590-\u05FFa-zA-Z0-9])-[ \t]+(?=[\u0590-\u05FFa-zA-Z0-9])/g,
+     '$1-',
+   );
+
+   // Underscore stays glued
+   s = s.replace(/[ \t]*_[ \t]*/g, '_');
+
+   // Quotes: pair open/close across the document
+   {
+     let out = '';
+     let q = 0;
+     for (let i = 0; i < s.length; i++) {
+       const ch = s[i];
+       if (ch !== '"') {
+         out += ch;
+         continue;
+       }
+       if (q % 2 === 0) {
+         // opening
+         if (out && !/[\s\n(]$/.test(out)) out += ' ';
+         out += '"';
+         while (i + 1 < s.length && (s[i + 1] === ' ' || s[i + 1] === '\t')) i++;
+       } else {
+         // closing
+         out = out.replace(/[ \t]+$/, '');
+         out += '"';
+         const next = s[i + 1];
+         if (next && (WORD_CHAR.test(next) || next === '(' || next === '"')) out += ' ';
+       }
+       q++;
+     }
+     s = out;
+   }
+
+   // Collapse runs of spaces/tabs to one — but keep two spaces after "." before a letter
+   s = s.replace(/\.(?=[ \t]*[\u0590-\u05FFa-zA-Z])/g, '.\u0000');
+   s = s.replace(/[ \t]{2,}/g, ' ');
+   s = s.replace(/\.\u0000 ?/g, '.  ');
+
+   s = s.replace(/^[ \t]+|[ \t]+$/g, '');
+   return s;
  }
- function insertAtSelection(text, replaceSelection) {
+
+ function insertAtSelection(text, replaceSelection, kind) {
    if (!text && text !== '') return;
    restoreSelection(true);
    const start = report.selectionStart;
@@ -706,9 +792,29 @@ body.format-wide #chooseKeyboardBtn{display:none}
    // Push/insert mode: replace only an explicit selection; otherwise insert at caret.
    const from = replaceSelection && start !== end ? start : start;
    const to = replaceSelection && start !== end ? end : start;
-   const before = report.value.slice(0, from);
-   const after = report.value.slice(to);
-   const addition = padTermSpaces(text, before, after);
+   let before = report.value.slice(0, from);
+   let after = report.value.slice(to);
+   let addition;
+   if (kind === 'hyphen') {
+     // מקף מחבר: glue previous and next word with "-" (no spaces)
+     before = before.replace(/[ \t]+$/, '');
+     after = after.replace(/^[ \t]+/, '');
+     const caret = before.length + 1;
+     report.value = before + '-' + after;
+     report.setSelectionRange(caret, caret);
+     savedSel = { start: caret, end: caret };
+     dictationPosition = caret;
+     report.dispatchEvent(new Event('input', { bubbles: true }));
+     return;
+   }
+   if (kind === 'dash') {
+     // קו מפריד: always spaced en-dash
+     addition = ' – ';
+     if (/[\s\n]$/.test(before)) addition = '– ';
+     if (/^[\s\n]/.test(after)) addition = addition.replace(/ $/, '');
+   } else {
+     addition = padTermSpaces(text, before, after);
+   }
    report.setRangeText(addition, from, to, 'end');
    savedSel = { start: report.selectionStart, end: report.selectionEnd };
    dictationPosition = report.selectionEnd;
@@ -744,16 +850,26 @@ body.format-wide #chooseKeyboardBtn{display:none}
 
  // Build special-term buttons once
  SPECIAL_TERMS.forEach((term) => {
+   const isObj = term && typeof term === 'object';
+   const label = isObj ? term.label : term;
+   const insert = isObj ? term.insert : term;
+   const kind = isObj ? term.kind : undefined;
    const btn = document.createElement('button');
    btn.type = 'button';
    btn.className = 'chip';
-   btn.textContent = term;
-   btn.dataset.term = term;
+   btn.textContent = label;
+   btn.title =
+     kind === 'hyphen'
+       ? 'מקף מחבר — מילה-מילה בלי רווח'
+       : kind === 'dash'
+         ? 'קו מפריד — רווח לפני ואחרי'
+         : label;
+   btn.dataset.term = insert;
    btn.addEventListener('click', (e) => {
      e.preventDefault();
      e.stopPropagation();
      const hasSelection = savedSel.start !== savedSel.end;
-     insertAtSelection(term, hasSelection);
+     insertAtSelection(insert, hasSelection, kind);
      maybeCloseAfterAction();
    });
    termsGrid.appendChild(btn);
@@ -1228,7 +1344,7 @@ body.format-wide #chooseKeyboardBtn{display:none}
        copyStatus.textContent = 'הטקסט נוקה והועתק. מקטינים להדבקה במערכת הדיווח…';
        reduceAppForPaste();
      } else {
-       copyStatus.textContent = 'הטקסט נוקה בחלון והועתק (רווחים כפולים ותחילת שורה).';
+       copyStatus.textContent = 'הטקסט נוקה בחלון והועתק (פיסוק ורווחים).';
      }
    } catch (e) {
      report.focus();
