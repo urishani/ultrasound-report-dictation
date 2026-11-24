@@ -353,8 +353,8 @@ body.format-wide #chooseKeyboardBtn{display:none}
      '$1 – $2',
    );
    s = s.replace(
-    // מקף (final ף) or מקפים (פ+ים) — not /מקפים?/ which never matched מקף.
-    new RegExp(`(${word})[ \\t]+מקפ(?:ף|ים)(?:[ \\t]+מחבר)?[ \\t]+(${word})`, 'g'),
+    // מקף uses final ף; plural מקפים uses פ+ים — match both explicitly.
+    new RegExp(`(${word})[ \\t]+(?:מקף|מקפים)(?:[ \\t]+מחבר)?[ \\t]+(${word})`, 'g'),
     '$1-$2',
   );
    return s;
