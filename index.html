@@ -557,18 +557,22 @@ body.format-wide #chooseKeyboardBtn{display:none}
    ];
    for (const [pattern, replacement] of units) text = text.replace(pattern, replacement);
 
-   const medical = [
-     [/fatty liver/gi, 'כבד שומני'], [/gallbladder/gi, 'כיס מרה'],
-     [/urinary bladder/gi, 'שלפוחית השתן'], [/common bile duct/gi, 'צינור המרה המשותף'],
-     [/no free fluid/gi, 'אין נוזל חופשי'], [/no hydronephrosis/gi, 'אין הידרונפרוזיס'],
-     [/simple cyst/gi, 'ציסטה פשוטה'], [/solid lesion/gi, 'נגע סולידי'],
-     [/hematoma/gi, 'המטומה'], [/haematoma/gi, 'המטומה'], [/cyst/gi, 'ציסטה'],
-     [/lesion/gi, 'נגע'], [/spleen/gi, 'טחול'], [/pancreas/gi, 'לבלב'],
-     [/kidneys?/gi, 'כליות'], [/liver/gi, 'כבד'], [/prostate/gi, 'ערמונית'],
-     [/uterus/gi, 'רחם'], [/ovaries/gi, 'שחלות'], [/doppler/gi, 'דופלר'],
-     [/impression/gi, 'סיכום'], [/findings/gi, 'ממצאים']
-   ];
-   for (const [pattern, replacement] of medical) text = text.replace(pattern, replacement);
+  // Medical cues stay in the active speech language — never EN↔HE cross-substitute.
+  // English: canonicalize spoken cues to clinical English. Hebrew: leave ASR Hebrew as-is.
+  if (isEnglishSpeech()) {
+    const medical = [
+      [/fatty liver/gi, 'Fatty Liver'], [/gallbladder/gi, 'Gallbladder'],
+      [/urinary bladder/gi, 'Urinary Bladder'], [/common bile duct/gi, 'CBD'],
+      [/no free fluid/gi, 'No Free Fluid'], [/no hydronephrosis/gi, 'No Hydronephrosis'],
+      [/simple cyst/gi, 'Simple Cyst'], [/solid lesion/gi, 'Solid Lesion'],
+      [/hematoma|haematoma/gi, 'Hematoma'], [/spleen/gi, 'Spleen'],
+      [/pancreas/gi, 'Pancreas'], [/kidneys?/gi, 'Kidneys'], [/liver/gi, 'Liver'],
+      [/prostate/gi, 'Prostate'], [/uterus/gi, 'Uterus'], [/ovaries/gi, 'Ovaries'],
+      [/doppler/gi, 'Doppler'], [/impression/gi, 'Summary'], [/findings/gi, 'Findings'],
+      [/cyst/gi, 'Cyst'], [/lesion/gi, 'Lesion']
+    ];
+    for (const [pattern, replacement] of medical) text = text.replace(pattern, replacement);
+  }
    // Trim spaces/tabs only — never strip \n from "שורה חדשה" / paragraph commands.
    return text.replace(/^[ \t]+|[ \t]+$/g, '');
  }
