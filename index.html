@@ -291,28 +291,33 @@ body.format-wide #chooseKeyboardBtn{display:none}
  let lastRecognitionError = null, liveInterimStart = null, restartPending = false;
  let committedFinalCount = 0, sessionFinalized = false;
 
+ // Clinical / special vocabulary chips — labels follow speech language (he vs en).
  const MEDICAL_TERMS = [
-   'כבד', 'כיס מרה', 'CBD', 'לבלב', 'טחול', 'כליות',
-   'שלפוחית השתן', 'ערמונית', 'רחם', 'שחלות',
-   'אין נוזל חופשי', 'אין הידרונפרוזיס', 'ציסטה פשוטה',
-   'נגע סולידי', 'דופלר', 'סיכום:', 'המטומה',
+   { he: 'כבד', en: 'Liver' },
+   { he: 'כיס מרה', en: 'Gallbladder' },
+   { he: 'CBD', en: 'CBD' },
+   { he: 'לבלב', en: 'Pancreas' },
+   { he: 'טחול', en: 'Spleen' },
+   { he: 'כליות', en: 'Kidneys' },
+   { he: 'שלפוחית השתן', en: 'Urinary bladder' },
+   { he: 'ערמונית', en: 'Prostate' },
+   { he: 'רחם', en: 'Uterus' },
+   { he: 'שחלות', en: 'Ovaries' },
+   { he: 'אין נוזל חופשי', en: 'No free fluid' },
+   { he: 'אין הידרונפרוזיס', en: 'No hydronephrosis' },
+   { he: 'ציסטה פשוטה', en: 'Simple cyst' },
+   { he: 'נגע סולידי', en: 'Solid lesion' },
+   { he: 'דופלר', en: 'Doppler' },
+   { he: 'סיכום:', en: 'Summary:' },
+   { he: 'המטומה', en: 'Hematoma' },
  ];
- // Punctuation / layout chips — labels follow speech language (he vs en).
+ // Punctuation chips stay Hebrew-labeled as before (not part of medical i18n).
  const SYMBOL_TERMS = [
-   { insert: '\n', kind: 'newline', labelHe: 'שורה חדשה', labelEn: 'New Line',
-     titleHe: 'מעבר לשורה חדשה', titleEn: 'Insert a new line' },
-   { insert: ',', kind: 'punct', labelHe: 'פסיק', labelEn: 'comma' },
-   { insert: '.', kind: 'punct', labelHe: 'נקודה', labelEn: 'period' },
-   { insert: ':', kind: 'punct', labelHe: 'נקודתיים', labelEn: 'colon' },
-   { insert: '(', kind: 'punct', labelHe: 'פותח סוגריים', labelEn: 'open parenthesis' },
-   { insert: ')', kind: 'punct', labelHe: 'סוגר סוגריים', labelEn: 'close parenthesis' },
-   { insert: '_', kind: 'punct', labelHe: 'קו תחתון', labelEn: 'underscore' },
-   { insert: '"', kind: 'punct', labelHe: 'מרכאות', labelEn: 'quote' },
    // מקף מחבר: מילה-מילה · קו מפריד: רווח – רווח
-   { insert: '-', kind: 'hyphen', labelHe: 'מקף', labelEn: 'hyphen',
-     titleHe: 'מקף מחבר — מילה-מילה בלי רווח', titleEn: 'Hyphen — join words with no spaces' },
-   { insert: '–', kind: 'dash', labelHe: 'קו מפריד', labelEn: 'dash',
-     titleHe: 'קו מפריד — רווח לפני ואחרי', titleEn: 'Dash — spaces on both sides' },
+   { label: 'מקף', insert: '-', kind: 'hyphen',
+     title: 'מקף מחבר — מילה-מילה בלי רווח' },
+   { label: 'קו מפריד', insert: '–', kind: 'dash',
+     title: 'קו מפריד — רווח לפני ואחרי' },
  ];
  const SPEECH_LANG_KEY = 'usDictationSpeechLang';
  const speechLangSel = document.getElementById('speechLang');
@@ -320,21 +325,16 @@ body.format-wide #chooseKeyboardBtn{display:none}
  function isEnglishSpeech() {
    return String(speechLangSel?.value || 'he-IL').toLowerCase().startsWith('en');
  }
- /** Active chip list for the current speech language (medical + symbol terms). */
+ /** Active chip list: medical terms localized by speech language + fixed punctuation chips. */
  function getSpecialTerms() {
    const en = isEnglishSpeech();
-   return [
-     ...MEDICAL_TERMS,
-     ...SYMBOL_TERMS.map((term) => ({
-       ...term,
-       label: en ? term.labelEn : term.labelHe,
-       title: en
-         ? (term.titleEn || term.labelEn)
-         : (term.titleHe || term.labelHe),
-     })),
-   ];
+   const medical = MEDICAL_TERMS.map((term) => {
+     const label = en ? term.en : term.he;
+     return { label, insert: label, title: label };
+   });
+   return [...medical, ...SYMBOL_TERMS];
  }
- // Keep SPECIAL_TERMS defined for callers; rebuildSpecialTermChips refreshes it.
+ // Keep SPECIAL_TERMS defined for callers; buildSpecialTermChips refreshes it.
  let SPECIAL_TERMS = getSpecialTerms();
 
  let clickTimer = null;
@@ -958,7 +958,7 @@ body.format-wide #chooseKeyboardBtn{display:none}
      const btn = document.createElement('button');
      btn.type = 'button';
      btn.className = 'chip';
-     if (en && isObj && term.kind) btn.classList.add('ltr');
+     if (en) btn.classList.add('ltr');
      btn.textContent = label;
      btn.title = title;
      btn.dataset.term = insert;
