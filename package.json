@@ -5,9 +5,15 @@
   "type": "module",
   "description": "Ultrasound report dictation app with a small Node/Postgres backend for accounts.",
   "scripts": {
-    "start": "node server/index.mjs"
+    "start": "node server/index.mjs",
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview"
   },
   "dependencies": {
     "pg": "8.13.1"
+  },
+  "devDependencies": {
+    "vite": "^6.3.5"
   }
 }
