@@ -71,6 +71,11 @@ footer{color:#6a7c87;font-size:.8rem;text-align:center;padding:12px}
 .modal-dialog .help-list-title{margin:0 0 6px;font-weight:700;color:#25485c}
 .modal-dialog ul.help-symbol-list{margin:0 0 14px;padding-inline-start:1.25em;color:#3d5564;line-height:1.65;font-size:.93rem}
 .modal-dialog ul.help-symbol-list li{margin:0 0 4px}
+/* English help/report copy must read LTR inside the Hebrew RTL app */
+.help-ltr,.ltr{direction:ltr;text-align:left;unicode-bidi:isolate}
+.modal-dialog .help-ltr{margin:0 0 14px}
+.modal-dialog .help-ltr .help-list-title{margin:0 0 6px}
+.modal-dialog .help-ltr ul.help-symbol-list{margin:0;padding-left:1.25em;padding-right:0}
 .modal-close{position:absolute;top:12px;left:12px;width:36px;height:36px;border-radius:50%;background:#e8f0f4;color:#183042;padding:0;font-size:1.2rem;line-height:1}
 
 /* Popup sits under the corrected line inside the text window; 80% opaque */
@@ -219,11 +224,11 @@ body.format-wide #chooseKeyboardBtn{display:none}
   <div class="modal-dialog">
     <button type="button" class="modal-close" id="helpClose" aria-label="סגור">×</button>
     <h2 id="helpTitle">איך להשתמש</h2>
-    <p>לחצו על „התחל הקלטה” ודברו. לחיצה בתוך מילה בוחרת את המילה; לחיצה על רווח ממקמת את הסמן. בתחתית המסך בחרו „פורמט רחב” (wide format) למחשב או „פורמט צר” (narrow format) לטלפון. בפורמט רחב נפתח פאנל מילים מיוחדות מתחת לשורה שנערכת (בלי כפתור מקלדת). בפורמט צר מוצגת גם בחירת מקלדת.</p>
+    <p>לחצו על „התחל הקלטה” ודברו. לחיצה בתוך מילה בוחרת את המילה; לחיצה על רווח ממקמת את הסמן. בתחתית המסך בחרו „פורמט רחב” (<span class="ltr" dir="ltr" lang="en">wide format</span>) למחשב או „פורמט צר” (<span class="ltr" dir="ltr" lang="en">narrow format</span>) לטלפון. בפורמט רחב נפתח פאנל מילים מיוחדות מתחת לשורה שנערכת (בלי כפתור מקלדת). בפורמט צר מוצגת גם בחירת מקלדת.</p>
     <p>סמנו „סגור אחרי בחירה” כדי שאחרי מחיקה או מונח הפאנל ייסגר מיד (ההגדרה נשמרת). „סגור” מעביר את הסמן לסוף הטקסט.</p>
     <p>בלחיצה על "העתק" הטקסט גם נערך כך שהפיסוק יהיה נכון עם רווחים בהתאם.</p>
     <p class="help-list-title">זיהוי סמלים מיוחדים:</p>
-    <ul class="help-symbol-list" dir="rtl">
+    <ul class="help-symbol-list" dir="rtl" lang="he">
       <li>„שורה חדשה” ← שורה חדשה (מעבר שורה)</li>
       <li>„פסיק” / „פסיקים” ← <span dir="ltr">,</span></li>
       <li>„נקודה” / „סימן נקודה” ← <span dir="ltr">.</span></li>
@@ -235,20 +240,22 @@ body.format-wide #chooseKeyboardBtn{display:none}
       <li>„מקף” / „מקפים” בין מילים ← מילה<span dir="ltr">-</span>מילה בלי רווח (למשל „תל מקף אביב” ← <span dir="ltr">תל-אביב</span>)</li>
       <li>„קו מפריד” / „מקף דש” / „דש” בין מילים ← מילה <span dir="ltr">–</span> מילה עם רווחים</li>
     </ul>
-    <p class="help-list-title" dir="ltr">Special symbols recognition:</p>
-    <ul class="help-symbol-list" dir="ltr">
-      <li>“New Line” / “newline” → new line</li>
-      <li>“comma” → <span dir="ltr">,</span></li>
-      <li>“period” / “full stop” → <span dir="ltr">.</span></li>
-      <li>“colon” → <span dir="ltr">:</span></li>
-      <li>“open parenthesis” / “left parenthesis” → <span dir="ltr">(</span></li>
-      <li>“close parenthesis” / “right parenthesis” → <span dir="ltr">)</span></li>
-      <li>“underscore” → <span dir="ltr">_</span></li>
-      <li>“quote” / “quotation mark” → <span dir="ltr">"</span></li>
-      <li>“hyphen” → <span dir="ltr">-</span></li>
-      <li>“dash” / “em dash” → spaced <span dir="ltr">–</span></li>
-    </ul>
-    <p>סמנו „הקטן אחרי העתקה” כדי לצמצם את חלון האפליקציה אחרי העתקה ולהדביק במערכת בית החולים. מומלץ להתקין את האפליקציה למחשב (Chrome ← התקן) כדי שההקטנה תעבוד בצורה אמינה.</p>
+    <div class="help-ltr" dir="ltr" lang="en">
+      <p class="help-list-title">Special symbols recognition:</p>
+      <ul class="help-symbol-list">
+        <li>“New Line” / “newline” → new line</li>
+        <li>“comma” → ,</li>
+        <li>“period” / “full stop” → .</li>
+        <li>“colon” → :</li>
+        <li>“open parenthesis” / “left parenthesis” → (</li>
+        <li>“close parenthesis” / “right parenthesis” → )</li>
+        <li>“underscore” → _</li>
+        <li>“quote” / “quotation mark” → "</li>
+        <li>“hyphen” → -</li>
+        <li>“dash” / “em dash” → spaced –</li>
+      </ul>
+    </div>
+    <p>סמנו „הקטן אחרי העתקה” כדי לצמצם את חלון האפליקציה אחרי העתקה ולהדביק במערכת בית החולים. מומלץ להתקין את האפליקציה למחשב (<span class="ltr" dir="ltr" lang="en">Chrome</span> ← התקן) כדי שההקטנה תעבוד בצורה אמינה.</p>
   </div>
 </div>
 
@@ -284,15 +291,51 @@ body.format-wide #chooseKeyboardBtn{display:none}
  let lastRecognitionError = null, liveInterimStart = null, restartPending = false;
  let committedFinalCount = 0, sessionFinalized = false;
 
- const SPECIAL_TERMS = [
+ const MEDICAL_TERMS = [
    'כבד', 'כיס מרה', 'CBD', 'לבלב', 'טחול', 'כליות',
    'שלפוחית השתן', 'ערמונית', 'רחם', 'שחלות',
    'אין נוזל חופשי', 'אין הידרונפרוזיס', 'ציסטה פשוטה',
    'נגע סולידי', 'דופלר', 'סיכום:', 'המטומה',
-   // מקף מחבר: מילה-מילה · קו מפריד: רווח – רווח
-   { label: 'מקף', insert: '-', kind: 'hyphen' },
-   { label: 'קו מפריד', insert: '–', kind: 'dash' }
  ];
+ // Punctuation / layout chips — labels follow speech language (he vs en).
+ const SYMBOL_TERMS = [
+   { insert: '\n', kind: 'newline', labelHe: 'שורה חדשה', labelEn: 'New Line',
+     titleHe: 'מעבר לשורה חדשה', titleEn: 'Insert a new line' },
+   { insert: ',', kind: 'punct', labelHe: 'פסיק', labelEn: 'comma' },
+   { insert: '.', kind: 'punct', labelHe: 'נקודה', labelEn: 'period' },
+   { insert: ':', kind: 'punct', labelHe: 'נקודתיים', labelEn: 'colon' },
+   { insert: '(', kind: 'punct', labelHe: 'פותח סוגריים', labelEn: 'open parenthesis' },
+   { insert: ')', kind: 'punct', labelHe: 'סוגר סוגריים', labelEn: 'close parenthesis' },
+   { insert: '_', kind: 'punct', labelHe: 'קו תחתון', labelEn: 'underscore' },
+   { insert: '"', kind: 'punct', labelHe: 'מרכאות', labelEn: 'quote' },
+   // מקף מחבר: מילה-מילה · קו מפריד: רווח – רווח
+   { insert: '-', kind: 'hyphen', labelHe: 'מקף', labelEn: 'hyphen',
+     titleHe: 'מקף מחבר — מילה-מילה בלי רווח', titleEn: 'Hyphen — join words with no spaces' },
+   { insert: '–', kind: 'dash', labelHe: 'קו מפריד', labelEn: 'dash',
+     titleHe: 'קו מפריד — רווח לפני ואחרי', titleEn: 'Dash — spaces on both sides' },
+ ];
+ const SPEECH_LANG_KEY = 'usDictationSpeechLang';
+ const speechLangSel = document.getElementById('speechLang');
+
+ function isEnglishSpeech() {
+   return String(speechLangSel?.value || 'he-IL').toLowerCase().startsWith('en');
+ }
+ /** Active chip list for the current speech language (medical + symbol terms). */
+ function getSpecialTerms() {
+   const en = isEnglishSpeech();
+   return [
+     ...MEDICAL_TERMS,
+     ...SYMBOL_TERMS.map((term) => ({
+       ...term,
+       label: en ? term.labelEn : term.labelHe,
+       title: en
+         ? (term.titleEn || term.labelEn)
+         : (term.titleHe || term.labelHe),
+     })),
+   ];
+ }
+ // Keep SPECIAL_TERMS defined for callers; rebuildSpecialTermChips refreshes it.
+ let SPECIAL_TERMS = getSpecialTerms();
 
  let clickTimer = null;
  let savedSel = { start: 0, end: 0 };
@@ -326,7 +369,7 @@ body.format-wide #chooseKeyboardBtn{display:none}
    const d = document.createElement('span'); d.className = 'dot' + (live ? ' live' : '');
    status.append(d, document.createTextNode(' ' + message));
  }
- const VOICE_COMMANDS = [
+ const VOICE_COMMANDS_EN = [
    // English punctuation / line-break commands and common ASR variants
    [/\bnew[\s-]?lines?\b/gi, '\n'], [/\bnext[\s-]?lines?\b/gi, '\n'],
    [/\bnewline\b/gi, '\n'], [/\bline break\b/gi, '\n'], [/\blinebreak\b/gi, '\n'],
@@ -342,6 +385,10 @@ body.format-wide #chooseKeyboardBtn{display:none}
    [/\bun[\s-]?quotes?\b/gi, '"'],
    [/\bquotation[\s-]?marks?\b/gi, '"'],
    [/\bquotes?\b/gi, '"'],
+   [/\bhyphens?\b/gi, '-'],
+   [/\bem[\s-]?dashes?\b/gi, ' – '], [/\bdashes?\b/gi, ' – ']
+ ];
+ const VOICE_COMMANDS_HE = [
    // Hebrew: allow spaces/tabs between words (not newlines) so ASR splits still match
    [/שורה[ \t]*חדשה/g, '\n'], [/שורות[ \t]*חדשות/g, '\n'],
    [/שורה[ \t]*הבאה/g, '\n'], [/לשורה[ \t]*חדשה/g, '\n'], [/ירידת[ \t]*שורה/g, '\n'],
@@ -359,9 +406,7 @@ body.format-wide #chooseKeyboardBtn{display:none}
    [/סוגריי?ם[ \t]*(?:סגורים|סגור)/g, ')'],
    [/קו[ \t]*תחתו[ןנ](?![\u0590-\u05FF])/g, '_'], [/קו[ \t]*תחתי(?![\u0590-\u05FF])/g, '_'],
    [/מי?רכאות/g, '"'], [/מי?רכאה/g, '"'],
-   // English hyphen / dash words (Hebrew מקף join is handled in joinVoiceMakaf below).
-   [/\bhyphens?\b/gi, '-'],
-   [/\bem[\s-]?dashes?\b/gi, ' – '], [/\bdashes?\b/gi, ' – ']
+   // Hebrew מקף / dash joining is handled in joinVoiceMakaf below.
  ];
 
  /** Word token for מקף / קו מפריד joining (Hebrew letters, Latin, digits). */
@@ -389,8 +434,10 @@ body.format-wide #chooseKeyboardBtn{display:none}
  }
 
  function applyVoiceCommands(text) {
-   for (const [pattern, replacement] of VOICE_COMMANDS) text = text.replace(pattern, replacement);
-   text = joinVoiceMakaf(text);
+   const commands = isEnglishSpeech() ? VOICE_COMMANDS_EN : VOICE_COMMANDS_HE;
+   for (const [pattern, replacement] of commands) text = text.replace(pattern, replacement);
+   // Hebrew connecting/separating dash phrases only apply in Hebrew speech mode.
+   if (!isEnglishSpeech()) text = joinVoiceMakaf(text);
    // Light cleanup only — full typography runs on copy via cleanTextForCopy.
    return text
      .replace(/[ \t]+\n/g, '\n')
@@ -896,31 +943,43 @@ body.format-wide #chooseKeyboardBtn{display:none}
    if (termsPop.classList.contains('open')) positionEditDock(termsPop);
  });
 
- // Build special-term buttons once
- SPECIAL_TERMS.forEach((term) => {
-   const isObj = term && typeof term === 'object';
-   const label = isObj ? term.label : term;
-   const insert = isObj ? term.insert : term;
-   const kind = isObj ? term.kind : undefined;
-   const btn = document.createElement('button');
-   btn.type = 'button';
-   btn.className = 'chip';
-   btn.textContent = label;
-   btn.title =
-     kind === 'hyphen'
-       ? 'מקף מחבר — מילה-מילה בלי רווח'
-       : kind === 'dash'
-         ? 'קו מפריד — רווח לפני ואחרי'
-         : label;
-   btn.dataset.term = insert;
-   btn.addEventListener('click', (e) => {
-     e.preventDefault();
-     e.stopPropagation();
-     const hasSelection = savedSel.start !== savedSel.end;
-     insertAtSelection(insert, hasSelection, kind);
-     maybeCloseAfterAction();
+ function buildSpecialTermChips() {
+   const en = isEnglishSpeech();
+   SPECIAL_TERMS = getSpecialTerms();
+   termsGrid.replaceChildren();
+   termsGrid.dir = en ? 'ltr' : 'rtl';
+   termsGrid.lang = en ? 'en' : 'he';
+   SPECIAL_TERMS.forEach((term) => {
+     const isObj = term && typeof term === 'object';
+     const label = isObj ? term.label : term;
+     const insert = isObj ? term.insert : term;
+     const kind = isObj ? term.kind : undefined;
+     const title = isObj && term.title ? term.title : label;
+     const btn = document.createElement('button');
+     btn.type = 'button';
+     btn.className = 'chip';
+     if (en && isObj && term.kind) btn.classList.add('ltr');
+     btn.textContent = label;
+     btn.title = title;
+     btn.dataset.term = insert;
+     btn.addEventListener('click', (e) => {
+       e.preventDefault();
+       e.stopPropagation();
+       const hasSelection = savedSel.start !== savedSel.end;
+       insertAtSelection(insert, hasSelection, kind);
+       maybeCloseAfterAction();
+     });
+     termsGrid.appendChild(btn);
    });
-   termsGrid.appendChild(btn);
+ }
+ try {
+   const savedLang = localStorage.getItem(SPEECH_LANG_KEY);
+   if (savedLang === 'he-IL' || savedLang === 'en-US') speechLangSel.value = savedLang;
+ } catch (e) {}
+ buildSpecialTermChips();
+ speechLangSel.addEventListener('change', () => {
+   try { localStorage.setItem(SPEECH_LANG_KEY, speechLangSel.value); } catch (e) {}
+   buildSpecialTermChips();
  });
 
  chooseTermsBtn.addEventListener('click', (e) => {
