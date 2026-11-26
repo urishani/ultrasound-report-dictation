@@ -1,0 +1,15 @@
+{
+  "name": "ultrasound-report-dictation",
+  "private": true,
+  "version": "1.23.0",
+  "description": "Hebrew ultrasound report dictation (static browser app)",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview"
+  },
+  "devDependencies": {
+    "vite": "^6.3.5"
+  }
+}
