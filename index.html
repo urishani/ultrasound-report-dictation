@@ -146,11 +146,7 @@ body.format-wide #chooseKeyboardBtn{display:none}
   </div>
   <div id="status"><span class="dot"></span> מוכן להכתבה. מומלץ לדבר במשפטים קצרים וברורים.</div>
   <div class="report-wrap" id="reportWrap">
-    <textarea id="report" placeholder="הכתיבו כאן את ממצאי בדיקת האולטרסאונד…
-
-לדוגמה: הכבד בגודל תקין, מרקמו אחיד. אין עדות להרחבת דרכי המרה.
-
-לחיצה בטקסט ממקמת את הסמן; לחיצה כפולה בוחרת מילה — ואז ניתן למחוק או להחליף במונח."></textarea>
+    <textarea id="report" placeholder=""></textarea>
 
     <div class="edit-dock" id="editChoicePop" role="dialog" aria-label="בחירת עריכה">
       <div class="edit-choice">
@@ -329,6 +325,14 @@ body.format-wide #chooseKeyboardBtn{display:none}
  }
  // Keep SPECIAL_TERMS defined for callers; buildSpecialTermChips refreshes it.
  let SPECIAL_TERMS = getSpecialTerms();
+ const REPORT_PLACEHOLDER_HE =
+   'הכתיבו כאן את ממצאי בדיקת האולטרסאונד…\n\n' +
+   'לדוגמה: הכבד בגודל תקין, מרקמו אחיד. אין עדות להרחבת דרכי המרה.\n\n' +
+   'לחיצה בטקסט ממקמת את הסמן; לחיצה כפולה בוחרת מילה — ואז ניתן למחוק או להחליף במונח.';
+ const REPORT_PLACEHOLDER_EN =
+   'Enter ultrasound findings here…\n\n' +
+   'Example: The liver is normal in size with homogeneous echotexture. No evidence of biliary dilatation.\n\n' +
+   'Click in the text to place the caret; double-click a word to select it — then delete or replace with a special term.';
  // Report textarea dir is set from the initial speech language and stays until a new report.
  let reportDirLocked = false;
  function applyReportDirection({ lock = false } = {}) {
@@ -336,6 +340,10 @@ body.format-wide #chooseKeyboardBtn{display:none}
    const en = isEnglishSpeech();
    report.dir = en ? 'ltr' : 'rtl';
    report.lang = en ? 'en' : 'he';
+   // Empty-panel instruction follows speech language until the report is locked/started.
+   if (!report.value.trim()) {
+     report.placeholder = en ? REPORT_PLACEHOLDER_EN : REPORT_PLACEHOLDER_HE;
+   }
    if (lock) reportDirLocked = true;
  }
  function unlockReportDirection() {
