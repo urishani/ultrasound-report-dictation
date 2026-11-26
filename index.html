@@ -68,6 +68,9 @@ footer{color:#6a7c87;font-size:.8rem;text-align:center;padding:12px}
 .modal-dialog{position:relative;background:#fff;border-radius:16px;padding:20px 18px 16px;max-width:520px;width:100%;max-height:min(80vh,640px);overflow:auto;box-shadow:0 12px 40px #12243340}
 .modal-dialog h2{margin:0 0 12px;padding-left:36px}
 .modal-dialog p{margin:0 0 12px;color:#3d5564;line-height:1.6;font-size:.95rem}
+.modal-dialog .help-list-title{margin:0 0 6px;font-weight:700;color:#25485c}
+.modal-dialog ul.help-symbol-list{margin:0 0 14px;padding-inline-start:1.25em;color:#3d5564;line-height:1.65;font-size:.93rem}
+.modal-dialog ul.help-symbol-list li{margin:0 0 4px}
 .modal-close{position:absolute;top:12px;left:12px;width:36px;height:36px;border-radius:50%;background:#e8f0f4;color:#183042;padding:0;font-size:1.2rem;line-height:1}
 
 /* Popup sits under the corrected line inside the text window; 80% opaque */
@@ -219,7 +222,30 @@ body.format-wide #chooseKeyboardBtn{display:none}
     <p>לחצו על „התחל הקלטה” ודברו. לחיצה בתוך מילה בוחרת את המילה; לחיצה על רווח ממקמת את הסמן. בתחתית המסך בחרו פורמט: רחב (מחשב) או צר (טלפון). ברחב נפתח פאנל מילים מיוחדות מתחת לשורה שנערכת (בלי כפתור מקלדת). בצר מוצגת גם בחירת מקלדת.</p>
     <p>סמנו „סגור אחרי בחירה” כדי שאחרי מחיקה או מונח הפאנל ייסגר מיד (ההגדרה נשמרת). „סגור” מעביר את הסמן לסוף הטקסט.</p>
     <p>בלחיצה על "העתק" הטקסט גם נערך כך שהפיסוק יהיה נכון עם רווחים בהתאם.</p>
-    <p>בקול: „תל מקף אביב” ← <span dir="ltr">תל-אביב</span> (מקף מחבר בלי רווחים). „קו מפריד” / „דש” ← מקף מפריד עם רווחים (<span dir="ltr"> – </span>). גם: סוגריים, קו תחתון, מרכאות.</p>
+    <p class="help-list-title">זיהוי סמלים מיוחדים:</p>
+    <ul class="help-symbol-list" dir="rtl">
+      <li>„פסיק” / „פסיקים” ← <span dir="ltr">,</span></li>
+      <li>„נקודה” / „סימן נקודה” ← <span dir="ltr">.</span></li>
+      <li>„נקודתיים” ← <span dir="ltr">:</span></li>
+      <li>„פותח סוגריים” / „פתח סוגריים” / „סוגריים פתוחים” ← <span dir="ltr">(</span></li>
+      <li>„סוגר סוגריים” / „סגור סוגריים” / „סוגריים סגורים” ← <span dir="ltr">)</span></li>
+      <li>„קו תחתון” ← <span dir="ltr">_</span></li>
+      <li>„מרכאות” / „מרכאה” ← <span dir="ltr">"</span></li>
+      <li>„מקף” / „מקפים” בין מילים ← מילה<span dir="ltr">-</span>מילה בלי רווח (למשל „תל מקף אביב” ← <span dir="ltr">תל-אביב</span>)</li>
+      <li>„קו מפריד” / „מקף דש” / „דש” בין מילים ← מילה <span dir="ltr">–</span> מילה עם רווחים</li>
+    </ul>
+    <p class="help-list-title" dir="ltr">Special symbols recognition:</p>
+    <ul class="help-symbol-list" dir="ltr">
+      <li>“comma” → <span dir="ltr">,</span></li>
+      <li>“period” / “full stop” → <span dir="ltr">.</span></li>
+      <li>“colon” → <span dir="ltr">:</span></li>
+      <li>“open parenthesis” / “left parenthesis” → <span dir="ltr">(</span></li>
+      <li>“close parenthesis” / “right parenthesis” → <span dir="ltr">)</span></li>
+      <li>“underscore” → <span dir="ltr">_</span></li>
+      <li>“quote” / “quotation mark” → <span dir="ltr">"</span></li>
+      <li>“hyphen” → <span dir="ltr">-</span></li>
+      <li>“dash” / “em dash” → spaced <span dir="ltr">–</span></li>
+    </ul>
     <p>סמנו „הקטן אחרי העתקה” כדי לצמצם את חלון האפליקציה אחרי העתקה ולהדביק במערכת בית החולים. מומלץ להתקין את האפליקציה למחשב (Chrome ← התקן) כדי שההקטנה תעבוד בצורה אמינה.</p>
   </div>
 </div>
