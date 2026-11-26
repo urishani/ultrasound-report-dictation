@@ -40,7 +40,9 @@ h2{font-size:1.1rem;margin:0 0 12px}
 .dot{display:inline-block;width:9px;height:9px;border-radius:50%;background:#91a5b2;margin-left:7px}
 .dot.live{background:#d92d20;box-shadow:0 0 0 4px #d92d2020}
 .report-wrap{position:relative}
-textarea{width:100%;min-height:320px;border:1px solid #cbd8df;border-radius:12px;padding:14px;font:1.05rem/1.75 Arial,sans-serif;resize:vertical;direction:rtl}
+textarea{width:100%;min-height:320px;border:1px solid #cbd8df;border-radius:12px;padding:14px;font:1.05rem/1.75 Arial,sans-serif;resize:vertical;direction:rtl;text-align:right}
+textarea[dir="ltr"]{direction:ltr;text-align:left}
+textarea[dir="rtl"]{direction:rtl;text-align:right}
 body.format-narrow textarea{min-height:260px}
 .small{font-size:.88rem;color:#607482;line-height:1.55}
 .actions{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px;align-items:center}
@@ -327,6 +329,23 @@ body.format-wide #chooseKeyboardBtn{display:none}
  }
  // Keep SPECIAL_TERMS defined for callers; buildSpecialTermChips refreshes it.
  let SPECIAL_TERMS = getSpecialTerms();
+ // Report textarea dir is set from the initial speech language and stays until a new report.
+ let reportDirLocked = false;
+ function applyReportDirection({ lock = false } = {}) {
+   if (reportDirLocked && !lock) return;
+   const en = isEnglishSpeech();
+   report.dir = en ? 'ltr' : 'rtl';
+   report.lang = en ? 'en' : 'he';
+   if (lock) reportDirLocked = true;
+ }
+ function unlockReportDirection() {
+   reportDirLocked = false;
+   applyReportDirection();
+ }
+ function lockReportDirectionFromSpeechLang() {
+   if (reportDirLocked) return;
+   applyReportDirection({ lock: true });
+ }
 
  let clickTimer = null;
  let savedSel = { start: 0, end: 0 };
@@ -968,9 +987,12 @@ body.format-wide #chooseKeyboardBtn{display:none}
    if (savedLang === 'he-IL' || savedLang === 'en-US') speechLangSel.value = savedLang;
  } catch (e) {}
  buildSpecialTermChips();
+ applyReportDirection();
  speechLangSel.addEventListener('change', () => {
    try { localStorage.setItem(SPEECH_LANG_KEY, speechLangSel.value); } catch (e) {}
    buildSpecialTermChips();
+   // Mid-report language switches must not flip report direction.
+   if (!reportDirLocked && !report.value.trim()) applyReportDirection();
  });
 
  chooseTermsBtn.addEventListener('click', (e) => {
@@ -1288,6 +1310,8 @@ body.format-wide #chooseKeyboardBtn{display:none}
    }
    if (wantRecording || recording) return;
    hideEditPops();
+   // Empty report: lock direction from the speech language chosen at start.
+   if (!report.value.trim()) lockReportDirectionFromSpeechLang();
    // Resume from the user's current cursor/selection. Dictation is always
    // insert-mode and must not replace or delete existing text.
    dictationPosition = report.selectionStart ?? report.value.length;
@@ -1329,13 +1353,18 @@ body.format-wide #chooseKeyboardBtn{display:none}
    newDictationBtn.hidden = !hasText;
  }
  syncNewDictationBtn();
- report.addEventListener('input', syncNewDictationBtn);
+ report.addEventListener('input', () => {
+   syncNewDictationBtn();
+   if (!report.value.trim()) unlockReportDirection();
+   else lockReportDirectionFromSpeechLang();
+ });
  newDictationBtn.addEventListener('click', () => {
    report.value = '';
    copyStatus.textContent = '';
    hideEditPops();
    dictationPosition = 0;
    savedSel = { start: 0, end: 0 };
+   unlockReportDirection();
    syncNewDictationBtn();
    setRecordButton(false);
    setStatus('הכתבה חדשה — מוכנים להתחיל.');
