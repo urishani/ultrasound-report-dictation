@@ -1,0 +1,264 @@
+<!doctype html>
+<html lang="he" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#123b55">
+<title>ניהול משתמשים · מכתיב דוחות אולטרסאונד</title>
+<style>
+:root{font-family:Arial,"Noto Sans Hebrew",sans-serif;color:#183042;background:#f3f7fa}
+*{box-sizing:border-box}
+body{margin:0;padding:20px 12px 40px}
+main{max-width:900px;margin:auto}
+header{background:#123b55;color:#fff;border-radius:18px;padding:22px 20px;margin-bottom:12px}
+h1{font-size:1.4rem;margin:0 0 6px}
+header p{margin:0;color:#dceaf1;font-size:.92rem;line-height:1.5}
+header a{color:#fff;font-weight:700}
+.panel{background:#fff;border:1px solid #dbe5eb;border-radius:16px;padding:18px;margin:13px 0;box-shadow:0 3px 12px #163b5510}
+h2{font-size:1.05rem;margin:0 0 14px}
+form.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:12px;align-items:end}
+label{display:block;font-size:.88rem;color:#25485c}
+input,select{display:block;width:100%;margin-top:6px;padding:10px;border:1px solid #cbd8df;border-radius:10px;font:inherit;background:#fff}
+button{font:inherit;border:0;border-radius:10px;padding:10px 14px;font-weight:700;cursor:pointer}
+.primary{background:#126b91;color:#fff}
+.secondary{background:#e8f0f4;color:#183042}
+.danger{background:#f3d6da;color:#8a1f2b}
+button:disabled{opacity:.45;cursor:not-allowed}
+.msg{margin:10px 0 0;font-size:.88rem;color:#8a1f2b;min-height:1.1em;line-height:1.5}
+.table-wrap{overflow-x:auto}
+table{width:100%;border-collapse:collapse;font-size:.9rem}
+th,td{padding:10px 8px;text-align:right;border-bottom:1px solid #e6edf2;vertical-align:middle}
+th{font-size:.8rem;color:#607482;font-weight:700;white-space:nowrap}
+td select{min-width:92px;margin:0;padding:7px}
+td .row-actions{display:flex;flex-wrap:wrap;gap:6px}
+td .row-actions button{padding:7px 10px;font-size:.82rem;border-radius:8px}
+.badge{display:inline-block;padding:4px 9px;border-radius:999px;font-size:.78rem;font-weight:700}
+.badge.on{background:#e8f5ed;color:#155b35}
+.badge.off{background:#f3d6da;color:#8a1f2b}
+.me{font-size:.76rem;color:#607482}
+@media(max-width:560px){td,th{padding:8px 6px}}
+</style>
+</head>
+<body>
+<main>
+<header>
+  <h1>ניהול משתמשים</h1>
+  <p>הוספת משתמשים, שינוי תפקיד, השבתה ואיפוס סיסמאות · <a href="/">חזרה לאפליקציה</a></p>
+</header>
+
+<section class="panel">
+  <h2>משתמש חדש</h2>
+  <form id="createForm" class="grid">
+    <label>שם מלא<input id="newName" maxlength="80" required></label>
+    <label>שם משתמש<input id="newUsername" minlength="3" maxlength="40" required></label>
+    <label>סיסמה<input id="newPassword" type="password" minlength="8" required></label>
+    <label>תפקיד
+      <select id="newRole">
+        <option value="user">משתמש</option>
+        <option value="admin">מנהל</option>
+      </select>
+    </label>
+    <button class="primary" type="submit">הוסף משתמש</button>
+  </form>
+  <p class="msg" id="createMsg" role="alert"></p>
+</section>
+
+<section class="panel">
+  <h2>משתמשים (<span id="userCount">0</span>)</h2>
+  <p class="msg" id="listMsg" role="alert"></p>
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th>שם</th>
+          <th>שם משתמש</th>
+          <th>תפקיד</th>
+          <th>סטטוס</th>
+          <th>נוצר</th>
+          <th>פעולות</th>
+        </tr>
+      </thead>
+      <tbody id="usersBody"></tbody>
+    </table>
+  </div>
+</section>
+</main>
+<script>
+(() => {
+  const usersBody = document.getElementById('usersBody');
+  const userCount = document.getElementById('userCount');
+  const listMsg = document.getElementById('listMsg');
+  const createMsg = document.getElementById('createMsg');
+  let me = null;
+
+  async function api(path, options = {}) {
+    const res = await fetch(path, {
+      headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
+      ...options
+    });
+    if (res.status === 401) { location.replace('/login.html'); throw new Error('נדרשת התחברות'); }
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok) throw new Error(data.error || 'שגיאה בשרת');
+    return data;
+  }
+
+  function formatDate(value) {
+    try {
+      return new Date(value).toLocaleDateString('he-IL', { day: '2-digit', month: '2-digit', year: 'numeric' });
+    } catch (e) {
+      return '';
+    }
+  }
+
+  function render(users) {
+    usersBody.innerHTML = '';
+    userCount.textContent = String(users.length);
+    for (const user of users) {
+      const tr = document.createElement('tr');
+      const isSelf = me && user.id === me.id;
+
+      const nameCell = document.createElement('td');
+      nameCell.textContent = user.displayName;
+      if (isSelf) {
+        const tag = document.createElement('div');
+        tag.className = 'me';
+        tag.textContent = 'אתם';
+        nameCell.appendChild(tag);
+      }
+
+      const usernameCell = document.createElement('td');
+      usernameCell.textContent = user.username;
+
+      const roleCell = document.createElement('td');
+      const roleSelect = document.createElement('select');
+      roleSelect.setAttribute('aria-label', 'תפקיד של ' + user.displayName);
+      for (const [value, label] of [['user', 'משתמש'], ['admin', 'מנהל']]) {
+        const option = document.createElement('option');
+        option.value = value;
+        option.textContent = label;
+        if (user.role === value) option.selected = true;
+        roleSelect.appendChild(option);
+      }
+      roleSelect.disabled = isSelf;
+      roleSelect.addEventListener('change', async () => {
+        try {
+          await api('/api/users/' + user.id, { method: 'PATCH', body: JSON.stringify({ role: roleSelect.value }) });
+          await load();
+        } catch (err) {
+          listMsg.textContent = err.message;
+          roleSelect.value = user.role;
+        }
+      });
+      roleCell.appendChild(roleSelect);
+
+      const statusCell = document.createElement('td');
+      const badge = document.createElement('span');
+      badge.className = 'badge ' + (user.isActive ? 'on' : 'off');
+      badge.textContent = user.isActive ? 'פעיל' : 'מושבת';
+      statusCell.appendChild(badge);
+
+      const createdCell = document.createElement('td');
+      createdCell.textContent = formatDate(user.createdAt);
+
+      const actionsCell = document.createElement('td');
+      const actions = document.createElement('div');
+      actions.className = 'row-actions';
+
+      const toggleBtn = document.createElement('button');
+      toggleBtn.type = 'button';
+      toggleBtn.className = 'secondary';
+      toggleBtn.textContent = user.isActive ? 'השבת' : 'הפעל';
+      toggleBtn.disabled = isSelf;
+      toggleBtn.addEventListener('click', async () => {
+        try {
+          await api('/api/users/' + user.id, { method: 'PATCH', body: JSON.stringify({ isActive: !user.isActive }) });
+          await load();
+        } catch (err) {
+          listMsg.textContent = err.message;
+        }
+      });
+      actions.appendChild(toggleBtn);
+
+      const resetBtn = document.createElement('button');
+      resetBtn.type = 'button';
+      resetBtn.className = 'secondary';
+      resetBtn.textContent = 'איפוס סיסמה';
+      resetBtn.addEventListener('click', async () => {
+        const password = prompt('סיסמה חדשה עבור ' + user.displayName + ' (8 תווים לפחות):');
+        if (!password) return;
+        try {
+          await api('/api/users/' + user.id, { method: 'PATCH', body: JSON.stringify({ password }) });
+          listMsg.textContent = 'הסיסמה של ' + user.displayName + ' עודכנה.';
+        } catch (err) {
+          listMsg.textContent = err.message;
+        }
+      });
+      actions.appendChild(resetBtn);
+
+      const deleteBtn = document.createElement('button');
+      deleteBtn.type = 'button';
+      deleteBtn.className = 'danger';
+      deleteBtn.textContent = 'מחק';
+      deleteBtn.disabled = isSelf;
+      deleteBtn.addEventListener('click', async () => {
+        if (!confirm('למחוק את המשתמש ' + user.displayName + '?')) return;
+        try {
+          await api('/api/users/' + user.id, { method: 'DELETE' });
+          await load();
+        } catch (err) {
+          listMsg.textContent = err.message;
+        }
+      });
+      actions.appendChild(deleteBtn);
+
+      actionsCell.appendChild(actions);
+      tr.append(nameCell, usernameCell, roleCell, statusCell, createdCell, actionsCell);
+      usersBody.appendChild(tr);
+    }
+  }
+
+  async function load() {
+    listMsg.textContent = '';
+    const data = await api('/api/users');
+    render(data.users);
+  }
+
+  (async () => {
+    try {
+      const session = await api('/api/session');
+      me = session.user;
+      if (me.role !== 'admin') { location.replace('/'); return; }
+      await load();
+    } catch (err) {
+      listMsg.textContent = err.message;
+    }
+  })();
+
+  document.getElementById('createForm').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    createMsg.textContent = '';
+    const btn = e.target.querySelector('button');
+    btn.disabled = true;
+    try {
+      await api('/api/users', {
+        method: 'POST',
+        body: JSON.stringify({
+          displayName: document.getElementById('newName').value,
+          username: document.getElementById('newUsername').value,
+          password: document.getElementById('newPassword').value,
+          role: document.getElementById('newRole').value
+        })
+      });
+      e.target.reset();
+      createMsg.textContent = 'המשתמש נוסף.';
+      await load();
+    } catch (err) {
+      createMsg.textContent = err.message;
+    } finally {
+      btn.disabled = false;
+    }
+  });
+})();
+</script>
+</body>
+</html>

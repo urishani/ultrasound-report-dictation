@@ -1,0 +1,135 @@
+<!doctype html>
+<html lang="he" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#123b55">
+<title>התחברות · מכתיב דוחות אולטרסאונד</title>
+<link rel="manifest" href="manifest.webmanifest">
+<style>
+:root{font-family:Arial,"Noto Sans Hebrew",sans-serif;color:#183042;background:#f3f7fa}
+*{box-sizing:border-box}
+body{margin:0;padding:24px 14px 40px;display:flex;justify-content:center;min-height:100vh}
+main{width:100%;max-width:420px}
+header{background:#123b55;color:#fff;border-radius:18px;padding:22px 20px;margin-bottom:14px}
+h1{font-size:1.35rem;margin:0 0 6px}
+header p{margin:0;color:#dceaf1;font-size:.92rem;line-height:1.5}
+.panel{background:#fff;border:1px solid #dbe5eb;border-radius:16px;padding:20px;box-shadow:0 3px 12px #163b5510}
+h2{font-size:1.1rem;margin:0 0 14px}
+label{display:block;font-size:.9rem;color:#25485c;margin-bottom:12px}
+input{display:block;width:100%;margin-top:6px;padding:12px;border:1px solid #cbd8df;border-radius:10px;font:inherit;background:#fff}
+button{font:inherit;border:0;border-radius:11px;padding:13px 16px;font-weight:700;cursor:pointer}
+.primary{background:#126b91;color:#fff;width:100%}
+button:disabled{opacity:.5;cursor:not-allowed}
+.msg{margin:12px 0 0;font-size:.9rem;line-height:1.5;color:#8a1f2b;min-height:1.2em}
+.small{font-size:.86rem;color:#607482;line-height:1.55;margin:0 0 14px}
+footer{color:#6a7c87;font-size:.78rem;text-align:center;margin-top:14px}
+</style>
+</head>
+<body>
+<main>
+<header>
+  <h1>מכתיב דוחות אולטרסאונד</h1>
+  <p>התחברות למערכת · הכתבה, עריכה ושיתוף דוחות</p>
+</header>
+
+<section class="panel" id="loginPanel" hidden>
+  <h2>התחברות</h2>
+  <form id="loginForm">
+    <label>שם משתמש<input id="loginUsername" autocomplete="username" required></label>
+    <label>סיסמה<input id="loginPassword" type="password" autocomplete="current-password" required></label>
+    <button class="primary" type="submit">התחבר</button>
+  </form>
+  <p class="msg" id="loginMsg" role="alert"></p>
+</section>
+
+<section class="panel" id="bootstrapPanel" hidden>
+  <h2>הגדרת המנהל הראשון</h2>
+  <p class="small">זו ההפעלה הראשונה של המערכת. החשבון שתיצרו כאן הוא המנהל — הוא יוסיף וינהל את שאר המשתמשים.</p>
+  <form id="bootstrapForm">
+    <label>שם מלא<input id="bootName" maxlength="80" required></label>
+    <label>שם משתמש<input id="bootUsername" autocomplete="username" minlength="3" maxlength="40" required></label>
+    <label>סיסמה (8 תווים לפחות)<input id="bootPassword" type="password" autocomplete="new-password" minlength="8" required></label>
+    <label>אימות סיסמה<input id="bootPassword2" type="password" autocomplete="new-password" minlength="8" required></label>
+    <button class="primary" type="submit">צור מנהל והתחבר</button>
+  </form>
+  <p class="msg" id="bootMsg" role="alert"></p>
+</section>
+
+<footer>האפליקציה פועלת בדפדפן. אין להזין פרטים מזהים של מטופלים.</footer>
+</main>
+<script>
+(() => {
+  const loginPanel = document.getElementById('loginPanel');
+  const bootstrapPanel = document.getElementById('bootstrapPanel');
+  const loginMsg = document.getElementById('loginMsg');
+  const bootMsg = document.getElementById('bootMsg');
+
+  async function post(path, body) {
+    const res = await fetch(path, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(body || {})
+    });
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok) throw new Error(data.error || 'שגיאה בהתחברות');
+    return data;
+  }
+
+  (async () => {
+    try {
+      const res = await fetch('/api/setup', { headers: { Accept: 'application/json' } });
+      const data = await res.json();
+      const panel = data.needsBootstrap ? bootstrapPanel : loginPanel;
+      panel.hidden = false;
+      const first = panel.querySelector('input');
+      if (first) first.focus();
+    } catch (e) {
+      loginPanel.hidden = false;
+      loginMsg.textContent = 'לא ניתן להגיע לשרת. בדקו את החיבור ונסו שוב.';
+    }
+  })();
+
+  document.getElementById('loginForm').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    loginMsg.textContent = '';
+    const btn = e.target.querySelector('button');
+    btn.disabled = true;
+    try {
+      await post('/api/login', {
+        username: document.getElementById('loginUsername').value,
+        password: document.getElementById('loginPassword').value
+      });
+      location.replace('/');
+    } catch (err) {
+      loginMsg.textContent = err.message;
+      btn.disabled = false;
+    }
+  });
+
+  document.getElementById('bootstrapForm').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    bootMsg.textContent = '';
+    const password = document.getElementById('bootPassword').value;
+    if (password !== document.getElementById('bootPassword2').value) {
+      bootMsg.textContent = 'הסיסמאות אינן תואמות';
+      return;
+    }
+    const btn = e.target.querySelector('button');
+    btn.disabled = true;
+    try {
+      await post('/api/bootstrap', {
+        displayName: document.getElementById('bootName').value,
+        username: document.getElementById('bootUsername').value,
+        password
+      });
+      location.replace('/');
+    } catch (err) {
+      bootMsg.textContent = err.message;
+      btn.disabled = false;
+    }
+  });
+})();
+</script>
+</body>
+</html>

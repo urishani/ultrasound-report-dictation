@@ -1,0 +1,13 @@
+{
+  "name": "us-report-dictation",
+  "version": "1.24.0",
+  "private": true,
+  "type": "module",
+  "description": "Ultrasound report dictation app with a small Node/Postgres backend for accounts.",
+  "scripts": {
+    "start": "node server/index.mjs"
+  },
+  "dependencies": {
+    "pg": "8.13.1"
+  }
+}
